@@ -1,1 +1,5 @@
 myenv
+*.pyc
+*.backups
+*.highscores
+*pycache*
