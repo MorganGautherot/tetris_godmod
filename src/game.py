@@ -461,3 +461,20 @@ class Tetris(object):
                         (x * BLOCKSIZE, y * BLOCKSIZE),
                     )
         return surf
+    
+    def count_hole_number(self):
+        """ 
+        Count the nuber of hole in the tetris matrix. 
+        A hole is an empty space cover by a tetrominoes
+        """
+        number_hole = 0
+        for width in range(MATRIX_WIDTH):
+            hole = False
+            for height in range(MATRIX_HEIGHT-1, -1, -1):
+                if self.matrix[height, width] == None and not(hole) :
+                    hole = True
+                if self.matrix[height, width] != None and self.matrix[height, width][0] == 'block' and hole:
+                    number_hole +=1
+                    hole = False
+
+        return number_hole

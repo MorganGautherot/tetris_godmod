@@ -1,6 +1,6 @@
 import pygame
 from src.game import *
-from src.bot import random_bot
+from src.bot import random_bot, minimize_hole
 from src.images import construct_background_image
 
 class Train(object):
@@ -28,6 +28,7 @@ class Train(object):
         while True:
             try:
                 timepassed = clock.tick(50)
+                _ = minimize_hole(self.tetris)
                 move = random_bot()
                 if self.tetris.update(
                     (timepassed / 1000.0) if not self.tetris.paused else 0, move
