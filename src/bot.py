@@ -1,25 +1,20 @@
 import numpy as np
-from src.game import Tetris
 from src.config import *
-from pygame import Rect, Surface
-from src.tetrominoes import rotate
-
+import copy
 import time, random
 
-def random_bot(tetris:Tetris):
+def random_bot(tetris):
     """Make a random action for the tetrominoes"""
-    choice = np.random.randint(3)
+    choice = np.random.randint(4)
 
     if choice == 0:
-        tetris.movement_keys["left"] = 1
-        tetris.movement_keys["left"] = 0
-        tetris.movement_keys_timer = (-tetris.movement_keys_speed) * 2
+        tetris.move_left(tetris.current_tetromino, tetris.matrix)
     elif choice == 1:
-        tetris.movement_keys["right"] = 1
-        tetris.movement_keys["right"] = 0
-        tetris.movement_keys_timer = (-tetris.movement_keys_speed) * 2
+        tetris.move_right(tetris.current_tetromino, tetris.matrix)
     elif choice == 2:
-        tetris.request_rotation()
+        tetris.rotation(tetris.current_tetromino, tetris.matrix)
+    elif choice == 3:
+        tetris.move_down(tetris.current_tetromino, tetris.matrix)
 
 def count_hole_number(game_matrix:dict):
     """ 
@@ -71,7 +66,7 @@ def lowest_point(tetris, shape, position):
     return position
 
 
-def move_estimation(tetris:Tetris, cost_function:callable)->tuple:
+def move_estimation(tetris, cost_function:callable)->tuple:
     """ 
     Try every posssible move and return the best roation and movement of the tetrominoes
     """
@@ -80,42 +75,50 @@ def move_estimation(tetris:Tetris, cost_function:callable)->tuple:
     minimum_cost = np.inf
     possible_rotation = 4
 
+    current_tetromino_copy = copy.deepcopy(tetris.current_tetromino)
+
     # Try every rotation
     for rotation in range(1, possible_rotation+1): 
 
+        tetris.rotation(current_tetromino_copy, tetris.matrix)
+
         # For every rotation try every x position
-        for width in range(MATRIX_WIDTH+1):   
+        for width in range(0, 1+MATRIX_WIDTH):   
+            
             # start at the highest point and try every position in the x axis
-            acutal_position = (4, width)
+            posY, posX = current_tetromino_copy.tetromino_position
+            current_tetromino_copy.tetromino_position = (0, width)
 
-            possible_rotation, new_position, rotate_shape = tetris.request_rotation(acutal_position, rotation)
+            if tetris.fits_in_matrix(current_tetromino_copy.tetromino_position,
+                              current_tetromino_copy.tetromino_shape,
+                              tetris.matrix):
 
-            if possible_rotation:
-                position = lowest_point(tetris, rotate_shape, new_position)
+                futur_position, rotated_shape = tetris.last_valid_position(current_tetromino_copy, 
+                                                                        tetris.matrix)
+                current_tetromino_copy.tetromino_position = futur_position
 
-       
-                # Add the tetromino at the matrix game
-                with_tetromino = tetris.blend(shape=rotate_shape,
-                                                position=position, 
-                                                shadow=True) 
+                matrix_and_tetromino = tetris.add_tetromino_to_matrix(current_tetromino_copy, 
+                                                                    tetris.matrix)
 
-                # If it's possible to add the tetromino compute the cost 
-                # adding it at this place 
-                if with_tetromino :
-                    position_cost = cost_function(with_tetromino)    
-                    print(rotation)
-                    print(position)
-                    print(position_cost)
-                    # If the cost function is below the minimum cost
-                    if position_cost < minimum_cost:
-                        best_position = list([position])
-                        best_rotation = list([rotation])
-                        minimum_cost = position_cost
+                position_cost = cost_function(matrix_and_tetromino) 
 
-                    # Add the move with other move at the same cost
-                    elif position_cost == minimum_cost:
-                        best_position.append(position)
-                        best_rotation.append(rotation)
+                time.sleep(0.2)
+                print(futur_position)
+                print(position_cost)
+                tetris.tetris_window.redraw(tetris.tetris_window.screen, 
+                                    matrix_and_tetromino,
+                                    tetris.next_tetromino)
+
+                # If the cost function is below the minimum cost
+                if position_cost < minimum_cost:
+                    best_position = list([futur_position])
+                    best_rotation = list([rotation])
+                    minimum_cost = position_cost
+
+                # Add the move with other move at the same cost
+                elif position_cost == minimum_cost:
+                    best_position.append(futur_position)
+                    best_rotation.append(rotation)
 
     # Take only one rotation or position from the possible move
     best_position = random.choice(best_position)
@@ -124,30 +127,28 @@ def move_estimation(tetris:Tetris, cost_function:callable)->tuple:
     return best_position, best_rotation, minimum_cost
 
 
-def system_expert(tetris:Tetris):
+def system_expert(tetris):
     """
     place the tetrominoes minimizing the hole
     """
 
     (best_pos_y, best_pos_x), best_rotation, minimum_cost = move_estimation(tetris, custom_metric)
-    print('----------')
-    print(minimum_cost)
-    print('----------')
-    posY, posX = tetris.tetromino_position
 
-    for rotate in range(best_rotation):
+    posY, posX = tetris.current_tetromino.tetromino_position
 
-        tetris.request_rotation(tetris.tetromino_position, 1)
-    
-    if best_pos_x > posX :
-        for _ in range(best_pos_x-posX):
-            tetris.request_movement('right')
-
-    elif best_pos_x < posX :
-        for _ in range(posX-best_pos_x):
-            tetris.request_movement('left')
-
-    time.sleep(0.5)
+    #for rotate in range(best_rotation):
+    #    tetris.rotation(tetris.current_tetromino, tetris.matrix)
+#
+    #if best_pos_x > posX :
+    #    for _ in range(best_pos_x-posX):
+    #        tetris.move_right(tetris.current_tetromino, tetris.matrix)
+#
+    #elif best_pos_x < posX :
+    #    for _ in range(posX-best_pos_x):
+    #        tetris.move_left(tetris.current_tetromino, tetris.matrix)
 
 
-    tetris.hard_drop()
+    time.sleep(1)
+
+
+    #tetris.hard_drop(tetris.current_tetromino, tetris.matrix)

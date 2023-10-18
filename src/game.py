@@ -3,6 +3,7 @@ from src.score import score
 from src.tetrominoes import Tetrominoes
 import src.config as config
 import pygame
+from src.bot import random_bot
 import os
 
 def get_sound(filename):
@@ -29,26 +30,14 @@ class Tetris():
 
         self.linescleared_sound = get_sound("linecleared.wav")
 
-    def play(self):
+    def tetromino_falls_over_time(self):
+        timepassed = self.clock.tick(50)
+        self.downwards_speed = self.base_downwards_speed ** (1 + self.tetris_score.level / 10.0)
+        self.downwards_timer += timepassed/ 1000.0
 
-        while True:
-
-            # Time of the game
-            timepassed = self.clock.tick(50)
-            self.downwards_speed = self.base_downwards_speed ** (1 + self.tetris_score.level / 10.0)
-            self.downwards_timer += timepassed/ 1000.0
-
-            if self.downwards_timer > self.downwards_speed:
-                self.move_down(self.current_tetromino, self.matrix)
-                self.downwards_timer %= self.downwards_speed
-
-            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                           self.matrix)
-            
-            self.tetris_window.redraw(self.tetris_window.screen, 
-                                      matrix_and_tetromino,
-                                      self.next_tetromino)
-            self.user_action()
+        if self.downwards_timer > self.downwards_speed:
+            self.move_down(self.current_tetromino, self.matrix)
+            self.downwards_timer %= self.downwards_speed
 
     def add_tetromino_to_matrix(self, tetromino, matrix):
         """Add a tetromino to the matrix"""
