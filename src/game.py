@@ -4,7 +4,7 @@ from pygame import Rect, Surface
 import random
 import os
 import src.kezmenu
-from src.env_constant import *
+from src.config import *
 from src.tetrominoes import list_of_tetrominoes
 from src.tetrominoes import rotate
 
@@ -26,7 +26,6 @@ class Tetris(object):
                 (MATRIX_WIDTH * BLOCKSIZE, (MATRIX_HEIGHT - 2) * BLOCKSIZE),
             )
         )
-
         self.matrix = dict()
         for y in range(MATRIX_HEIGHT):
             for x in range(MATRIX_WIDTH):
@@ -89,7 +88,7 @@ class Tetris(object):
 
         self.lock_tetromino()
 
-    def update(self, timepassed, move):
+    def update(self, timepassed):
         """
         Main game loop
         """
@@ -103,7 +102,7 @@ class Tetris(object):
         for event in events:
             if pressed(pygame.K_p):
                 self.surface.fill((0, 0, 0))
-                self.needs_redraw = True
+                #self.needs_redraw = True
                 self.paused = not self.paused
             elif event.type == pygame.QUIT:
                 self.gameover(full_exit=True)
@@ -117,11 +116,20 @@ class Tetris(object):
             # Controls movement of the tetromino
             if pressed(pygame.K_SPACE):
                 self.hard_drop()
+
             elif pressed(pygame.K_UP) or pressed(pygame.K_w):
-                self.request_rotation()
+
+                possible_rotation, new_position, new_shape = self.request_rotation(self.tetromino_position, 1)
+                if possible_rotation:
+                    self.tetromino_position = new_position
+                    self.tetromino_rotation = (self.tetromino_rotation + 1) % 4
+                    self.needs_redraw = True
+
             elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
                 self.request_movement("left")
                 self.movement_keys["left"] = 1
+
+
             elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
                 self.request_movement("right")
                 self.movement_keys["right"] = 1
@@ -133,20 +141,8 @@ class Tetris(object):
                 self.movement_keys["right"] = 0
                 self.movement_keys_timer = (-self.movement_keys_speed) * 2
 
-        if move == "space":
-            self.hard_drop()
-        elif move == "rotation":
-            self.request_rotation()
-        elif move == "left":
-            self.request_movement("left")
-            self.movement_keys["left"] = 1
-            self.movement_keys["left"] = 0
-            self.movement_keys_timer = (-self.movement_keys_speed) * 2
-        elif move == "right":
-            self.request_movement("right")
-            self.movement_keys["right"] = 1
-            self.movement_keys["right"] = 0
-            self.movement_keys_timer = (-self.movement_keys_speed) * 2
+
+
 
         self.downwards_speed = self.base_downwards_speed ** (1 + self.level / 10.0)
 
@@ -181,6 +177,7 @@ class Tetris(object):
         """
         Draws the image of the current tetromino
         """
+
         with_tetromino = self.blend(matrix=self.place_shadow())
 
         for y in range(MATRIX_HEIGHT):
@@ -236,35 +233,36 @@ class Tetris(object):
                 ):  # outside matrix
                     return False
 
-        return position
+        return True
 
-    def request_rotation(self):
+    def request_rotation(self, tetromino_position, rotation):
         """
         Checks if tetromino can rotate
         Returns the tetromino's rotation position if possible
         """
-        rotation = (self.tetromino_rotation + 1) % 4
-        shape = self.rotated(rotation)
 
-        y, x = self.tetromino_position
+        new_shape = self.rotated(rotation)
 
-        position = (
-            self.fits_in_matrix(shape, (y, x))
-            or self.fits_in_matrix(shape, (y, x + 1))
-            or self.fits_in_matrix(shape, (y, x - 1))
-            or self.fits_in_matrix(shape, (y, x + 2))
-            or self.fits_in_matrix(shape, (y, x - 2))
-        )
+        y, x = tetromino_position
+
+        if x < 0: 
+            position = (y, 0)
+        elif self.fits_in_matrix(new_shape, (y, x)):
+            position = (y, x)
+        elif self.fits_in_matrix(new_shape, (y, x-1)):
+            position = (y, x-1)
+        elif self.fits_in_matrix(new_shape, (y, x-2)):
+            position = (y, x-2)
+        elif self.fits_in_matrix(new_shape, (y, x-3)):
+            position = (y, x-3)
+        if self.current_tetromino.color=='blue' and x >= 7:
+            position = (y, 6)
         # ^ That's how wall-kick is implemented
 
-        if position and self.blend(shape, position):
-            self.tetromino_rotation = rotation
-            self.tetromino_position = position
-
-            self.needs_redraw = True
-            return self.tetromino_rotation
+        if self.blend(new_shape, position):
+            return True, position, new_shape
         else:
-            return False
+            return False, (-1, -1)
 
     def request_movement(self, direction):
         """
@@ -462,19 +460,3 @@ class Tetris(object):
                     )
         return surf
     
-    def count_hole_number(self):
-        """ 
-        Count the nuber of hole in the tetris matrix. 
-        A hole is an empty space cover by a tetrominoes
-        """
-        number_hole = 0
-        for width in range(MATRIX_WIDTH):
-            hole = False
-            for height in range(MATRIX_HEIGHT-1, -1, -1):
-                if self.matrix[height, width] == None and not(hole) :
-                    hole = True
-                if self.matrix[height, width] != None and self.matrix[height, width][0] == 'block' and hole:
-                    number_hole +=1
-                    hole = False
-
-        return number_hole

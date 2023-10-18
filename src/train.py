@@ -1,6 +1,6 @@
 import pygame
 from src.game import *
-from src.bot import random_bot, minimize_hole
+from src.bot import random_bot, system_expert, count_total_height, count_hole_number
 from src.images import construct_background_image
 
 class Train(object):
@@ -12,6 +12,7 @@ class Train(object):
         clock = pygame.time.Clock()
 
         self.tetris = Tetris(screen)
+        
         screen.blit(construct_background_image(screen.get_size()), (0, 0))
 
         tetris_border = Surface(
@@ -23,17 +24,23 @@ class Train(object):
         tetris_border.fill(BORDERCOLOR)
         screen.blit(tetris_border, (MATRIX_OFFSET, MATRIX_OFFSET))
 
-        self.redraw(screen)
+        needs_redraw = True
 
         while True:
             try:
                 timepassed = clock.tick(50)
-                _ = minimize_hole(self.tetris)
-                move = random_bot()
-                if self.tetris.update(
-                    (timepassed / 1000.0) if not self.tetris.paused else 0, move
-                ):
+                if needs_redraw :
                     self.redraw(screen)
+                
+                system_expert(self.tetris)
+                #print(count_hole_number(self.tetris.matrix))
+                #print(count_total_height(self.tetris.matrix))
+                #random_bot(self.tetris)
+                #print(count_total_height(self.tetris.matrix))
+
+                needs_redraw = self.tetris.update(
+                    (timepassed / 1000.0) if not self.tetris.paused else 0)
+                    
             except GameOver:
                 return
 
