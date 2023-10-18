@@ -1,7 +1,7 @@
 import pygame
 from src.windows import windows
+from src.game import Tetris
 
-wind = windows()
+tetris = Tetris()
 
-wind.draw_windows()
-
+tetris.play()

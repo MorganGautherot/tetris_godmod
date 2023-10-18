@@ -1,10 +1,11 @@
 from __future__ import print_function
 from collections import namedtuple
+import random
 
 X, O = 'X', None
 Tetromino = namedtuple("Tetrimino", "color shape")
 
-tetrominoes = {
+tetrominoes_dict = {
     "long": Tetromino(color="blue",
                       shape=((O,O,O,O),
                              (X,X,X,X),
@@ -34,41 +35,44 @@ tetrominoes = {
                                   (X,X,X),
                                   (O,O,O)))
 }
-list_of_tetrominoes = list(tetrominoes.values())
+tetrominoes_list = list(tetrominoes_dict.keys())
 
-def rotate(shape, times=1):
-    """ Rotate a shape to the right """
-    return shape if times == 0 else rotate(tuple(zip(*shape[::-1])), times-1)
+class Tetrominoes():
 
+    def __init__(self)->None:
+        """Initialization of a tetrominoes"""
+        self.tetromino_name = random.choice(tetrominoes_list)
+        self.tetromino_shape = tetrominoes_dict[self.tetromino_name].shape
+        self.tetromino_color = tetrominoes_dict[self.tetromino_name].color
+        self.tetromino_position = (
+            (0, 4) if len(self.tetromino_shape) == 2 else (0, 3)
+        )
 
-def shape_str(shape):
-    """ Return a string of a shape in human readable form """
-    return '\n'.join(''.join(map({'X': 'X', None: 'O'}.get, line))
-                     for line in shape)
+    def rotate(self,shape, times=1):
+        """ Rotate a shape to the right """
+        return shape if times == 0 else self.rotate(tuple(zip(*shape[::-1])), times-1)
 
-def shape(shape):
-    """ Print a shape in human readable form """
-    print(shape_str(shape))
-def test():
-    tetromino_shapes = [t.shape for t in list_of_tetrominoes]
-    map(rotate,    tetromino_shapes)
-    map(shape,     tetromino_shapes)
-    map(shape_str, tetromino_shapes)
+    def shape_str(self):
+        """ Return a string of a shape in human readable form """
+        return '\n'.join(''.join(map({'X': 'X', None: 'O'}.get, line))
+                        for line in self.tetromino_shape)
 
-    assert shape_str(tetrominoes["left_snake"].shape) == "XXO\nOXX\nOOO"
+    def shape(self,shape):
+        """ Print a shape in human readable form """
+        print(self.shape_str(shape))
 
-    assert rotate(tetrominoes["square"].shape) == tetrominoes["square"].shape
+    def move_right(self)->None:
+        """Change the position of the tetromino"""
+        posY, posX = self.tetromino_position
+        self.tetromino_position = posY, posX+1
 
-    assert rotate(tetrominoes["right_snake"].shape, 4) == tetrominoes["right_snake"].shape
+    def move_left(self)->None:
+        """Change the position of the tetromino"""
+        posY, posX = self.tetromino_position
+        self.tetromino_position = posY, posX-1
 
-    assert rotate(tetrominoes["hat"].shape)    == ((O,X,O),
-                                                   (O,X,X),
-                                                   (O,X,O))
+    def move_down(self)->None:
+        """Change the position of the tetromino"""
+        posY, posX = self.tetromino_position
+        self.tetromino_position = posY+1, posX
 
-    assert rotate(tetrominoes["hat"].shape, 2) == ((O,O,O),
-                                                   (X,X,X),
-                                                   (O,X,O))
-    print("All tests passed in {}, things seems to be working alright".format(__file__))
-
-if __name__ == '__main__':
-    test()

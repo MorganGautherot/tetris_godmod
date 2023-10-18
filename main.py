@@ -1,4 +1,3 @@
-from src.train import Train
 from src.config import *
 import pygame
 
