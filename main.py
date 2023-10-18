@@ -1,5 +1,5 @@
 from src.game import Tetris
-from src.bot import random_bot, count_hole_number, system_expert
+from src.bot import custom_metric, count_hole_line, random_bot, count_total_height, count_hole_number, system_expert
 tetris = Tetris()
 
 while True:
@@ -17,5 +17,7 @@ while True:
     #random_bot(tetris)
     tetris.user_action()
     #print(count_hole_number(tetris.matrix))
+    custom_metric(tetris.matrix)
     system_expert(tetris)
+
 

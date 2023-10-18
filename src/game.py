@@ -48,7 +48,7 @@ class Tetris():
 
         for x in range(posX, posX + len(shape)):
              for y in range(posY, posY + len(shape)):
-                 if shape[y - posY][x - posX]:
+                if shape[y - posY][x - posX]:
                     matrix_copy[(y, x)] = ('block', tetromino)
 
         return matrix_copy
@@ -60,8 +60,9 @@ class Tetris():
         posY, posX = position
         for x in range(posX, posX + len(shape)):
             for y in range(posY, posY + len(shape)):
+
                 if (
-                    self.matrix.get((y, x), False) is False 
+                    matrix.get((y, x), False) is False 
                     and shape[y - posY][x - posX] 
                     # outside matrix
                     or matrix.get((y, x)) 
@@ -129,6 +130,12 @@ class Tetris():
         elif self.fits_in_matrix((posY, posX+3), new_shape, matrix):
             tetromino.tetromino_shape = new_shape
             tetromino.tetromino_position = (posY, posX+3)
+        elif self.fits_in_matrix((posY, posX-4), new_shape, matrix):
+            tetromino.tetromino_shape = new_shape
+            tetromino.tetromino_position = (posY, posX-4)
+        elif self.fits_in_matrix((posY, posX+4), new_shape, matrix):
+            tetromino.tetromino_shape = new_shape
+            tetromino.tetromino_position = (posY, posX+4)
 
     def move_right(self, tetromino, matrix)->None:
         """move the tetromino to the right"""
@@ -169,7 +176,7 @@ class Tetris():
     def last_valid_position(self, tetromino, matrix)-> None:
         posY, posX = tetromino.tetromino_position
         shape = tetromino.tetromino_shape
-        new_posY = posY + 1
+        new_posY = 1
         while self.fits_in_matrix((new_posY, posX), shape, matrix):
             new_posY += 1
         
