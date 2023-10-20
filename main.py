@@ -17,7 +17,7 @@ while True:
     #random_bot(tetris)
     tetris.user_action()
     #print(count_hole_number(tetris.matrix))
-    custom_metric(tetris.matrix)
-    system_expert(tetris)
+    #custom_metric(tetris.matrix)
+    #system_expert(tetris)
 
 

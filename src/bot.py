@@ -118,32 +118,15 @@ def custom_metric(game_matrix:dict):
     long_hole = count_long_open_hole(game_matrix)
     line = is_line(game_matrix)
 
-    print(f'number_hole : {number_hole}')
-    print(f'total_height : {total_height}')
-    print(f'total_width : {total_width}')
-    print(f'max_height : {max_height}')
-    print(f'min_height : {min_height}')
-    print(f'long_hole : {long_hole}')
-    print(f'is_line : {line}')
+    #print(f'number_hole : {number_hole}')
+    #print(f'total_height : {total_height}')
+    #print(f'total_width : {total_width}')
+    #print(f'max_height : {max_height}')
+    #print(f'min_height : {min_height}')
+    #print(f'long_hole : {long_hole}')
+    #print(f'is_line : {line}')
 
     return number_hole + total_height + total_width + max_height - min_height + long_hole + line
-
-def get_last_valid_tetromino_position_into_matrix(self, tetromino, matrix)->None:
-
-    # start at the highest point and try every position in the x axis
-    posY, posX = tetromino.tetromino_position
-    tetromino.tetromino_position = (0, width)
-
-    futur_position, rotated_shape = tetris.last_valid_position(tetromino, 
-                                                               matrix)
-    tetromino.tetromino_position = futur_position
-
-    matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetromino, 
-                                                              matrix)
-
-    return matrix_and_tetromino
-
-
 
 def move_estimation(tetris, cost_function:callable)->tuple:
     """ 
