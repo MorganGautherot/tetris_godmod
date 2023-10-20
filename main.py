@@ -2,6 +2,8 @@ from src.game import Tetris
 from src.bot import custom_metric, count_hole_line, random_bot, count_total_height, count_hole_number, system_expert
 tetris = Tetris()
 
+take_picture = None
+
 while True:
 
     # Time of the game

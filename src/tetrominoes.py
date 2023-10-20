@@ -45,7 +45,7 @@ class Tetrominoes():
         self.tetromino_shape = tetrominoes_dict[self.tetromino_name].shape
         self.tetromino_color = tetrominoes_dict[self.tetromino_name].color
         self.tetromino_position = (
-            (0, 4) if len(self.tetromino_shape) == 2 else (0, 3)
+            (2, 4) if len(self.tetromino_shape) == 2 else (2, 3)
         )
 
     def rotate(self,shape, times=1):

@@ -25,6 +25,14 @@ class Tetris():
         self.current_tetromino = Tetrominoes()
         self.next_tetromino = Tetrominoes()
 
+
+        matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
+                                                            self.matrix)
+        self.tetris_window.redraw(self.tetris_window.screen, 
+                                matrix_and_tetromino,
+                                self.next_tetromino)
+        self.data_creation.screenshot('X', self.current_tetromino)
+
         self.clock = pygame.time.Clock()
         self.base_downwards_speed = 0.8  # Move down every 400 ms
         self.downwards_timer = 0
@@ -198,6 +206,13 @@ class Tetris():
     def lock_tetromino(self)->None:
         """Lock the tetromino to the matrix"""
 
+        matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
+                                                            self.matrix)
+        self.tetris_window.redraw(self.tetris_window.screen, 
+                                matrix_and_tetromino,
+                                self.next_tetromino)
+        self.data_creation.screenshot('Y', self.current_tetromino)
+
         self.matrix = self.add_tetromino_to_matrix(self.current_tetromino, 
                                                    self.matrix)
         
@@ -210,6 +225,13 @@ class Tetris():
         self.current_tetromino = self.next_tetromino
 
         self.next_tetromino = Tetrominoes()
+        
+        matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
+                                                            self.matrix)
+        self.tetris_window.redraw(self.tetris_window.screen, 
+                                matrix_and_tetromino,
+                                self.next_tetromino)
+        self.data_creation.screenshot('X', self.current_tetromino)
 
         # game over
         if not(self.fits_in_matrix(self.current_tetromino.tetromino_position, 

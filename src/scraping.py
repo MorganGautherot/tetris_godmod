@@ -11,7 +11,7 @@ class dataframe_creation():
 
 
         tetromino_name = current_tetromino.tetromino_name.replace('_', '-') 
-        screen = ImageGrab.grab(bbox=(651,190,1250,830))
+        screen = ImageGrab.grab(bbox=(370,120,1050,780))
 
         screen.save(f'{folder}/{self.number_screenshot}_{tetromino_name}.png', 'PNG') 
 
