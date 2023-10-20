@@ -2,6 +2,7 @@ from src.windows import windows
 from src.score import score
 from src.tetrominoes import Tetrominoes
 import src.config as config
+from src.scraping import dataframe_creation
 import pygame
 from src.bot import random_bot
 import os
@@ -14,7 +15,7 @@ def get_sound(filename):
 class Tetris():
 
     def __init__(self):
-
+        self.data_creation = dataframe_creation()
         self.tetris_score = score()
         self.tetris_window = windows(self.tetris_score)
         self.matrix = dict()
@@ -104,6 +105,10 @@ class Tetris():
                 self.rotation(self.current_tetromino, self.matrix)
             elif pressed(pygame.K_SPACE):
                 self.hard_drop(self.current_tetromino, self.matrix)
+            elif pressed(pygame.K_t):
+                self.data_creation.screenshot('X', self.current_tetromino)
+            elif pressed(pygame.K_y):
+                self.data_creation.screenshot('Y', self.current_tetromino)
 
     def rotation(self, tetromino, matrix)->None:
         """move the tetromino to the right"""
