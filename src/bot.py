@@ -2,6 +2,7 @@ import numpy as np
 from src.config import *
 import copy
 import time, random
+import tensorflow as tf
 
 def random_bot(tetris):
     """Make a random action for the tetrominoes"""
@@ -313,3 +314,119 @@ def system_expert(tetris):
 
     #time.sleep(0.01)
 
+
+
+class deep_bot():
+
+    def __init__(self):
+
+        self.model = self.init_model()
+
+    def base_model(self, inputs):
+
+        x = tf.keras.layers.Conv2D(8, (3, 3), padding="same", activation='relu', input_shape=(20, 10, 1))(inputs)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(16, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.Flatten()(x)
+        x = tf.keras.layers.Dense(64, activation='relu')(x)
+        x = tf.keras.layers.Dense(32, activation='relu')(x)
+
+        return x
+    
+    def final_model(self, inputs):
+        x = self.base_model(inputs)
+        rotation = tf.keras.layers.Dense(units='2', activation = 'softmax', name='rotation')(x)
+        column = tf.keras.layers.Dense(units = '10', activation = 'softmax', name = 'column')(x)
+        model = tf.keras.models.Model(inputs=inputs, outputs = [rotation, column])
+        return model
+
+    def init_model(self):
+        inputs = tf.keras.layers.Input(shape=(20, 10, 1))
+        model = self.final_model(inputs)
+        model.load_weights('artefacts/trained_model.h5')
+        return model
+
+
+    def create_matrix(self, tetris):
+        matrix = np.zeros((20, 10))
+
+        for i in range(20):
+            for j in range(10):
+                if not(tetris.matrix[i, j] is None):
+                    matrix[i, j]=1
+        
+        maitrix_shaped = np.expand_dims(np.expand_dims(matrix, axis=-1), axis=0)
+
+        return maitrix_shaped
+
+    def play(self, tetris):
+
+        input_image = self.create_matrix(tetris)
+
+
+        prediction = self.model.predict(input_image)
+
+        rotation = np.argmax(prediction[0])
+        column = np.argmax(prediction[1])
+
+        print('-----')
+        print(rotation)
+        print(column)      
+
+        self.move_tetromino(tetris, rotation, column)
+
+    def move_tetromino(self, tetris, rotation, column):
+
+        (posY, posX) = tetris.current_tetromino.tetromino_position
+
+        for _ in range(rotation):
+            
+            tetris.rotation(tetris.current_tetromino, tetris.matrix)
+
+            matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
+                                                    tetris.matrix)
+            tetris.tetris_window.redraw(tetris.tetris_window.screen, 
+                                    matrix_and_tetromino,
+                                    tetris.next_tetromino)
+            time.sleep(1)
+
+
+        binary_shape = np.where(np.array(tetris.current_tetromino.tetromino_shape)=='X', 1, 0)
+        shape_in_box = np.sum(binary_shape, axis=0)
+
+        for i in range(len(shape_in_box)):
+
+            if shape_in_box[i]>0:
+                column -= i
+                break
+
+        movement = column - posX
+
+        if movement > 0:
+            for _ in range(movement):
+
+                tetris.move_right(tetris.current_tetromino, tetris.matrix)
+
+                matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
+                                                    tetris.matrix)
+                tetris.tetris_window.redraw(tetris.tetris_window.screen, 
+                                    matrix_and_tetromino,
+                                    tetris.next_tetromino)
+                time.sleep(1)
+        elif movement < 0:
+            for _ in range(-movement):
+
+                tetris.move_left(tetris.current_tetromino, tetris.matrix)
+                matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
+                                                    tetris.matrix)
+                tetris.tetris_window.redraw(tetris.tetris_window.screen, 
+                                    matrix_and_tetromino,
+                                    tetris.next_tetromino)
+                time.sleep(1)
+
+        time.sleep(1)
+        tetris.hard_drop(tetris.current_tetromino, tetris.matrix)        
