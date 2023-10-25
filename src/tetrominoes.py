@@ -41,6 +41,7 @@ class Tetrominoes():
 
     def __init__(self)->None:
         """Initialization of a tetrominoes"""
+        self.rotation = 0
         self.tetromino_name = random.choice(tetrominoes_list)
         self.tetromino_shape = tetrominoes_dict[self.tetromino_name].shape
         self.tetromino_color = tetrominoes_dict[self.tetromino_name].color
@@ -50,6 +51,7 @@ class Tetrominoes():
 
     def rotate(self,shape, times=1):
         """ Rotate a shape to the right """
+        self.rotation = (self.rotation + times) % 4
         return shape if times == 0 else self.rotate(tuple(zip(*shape[::-1])), times-1)
 
     def shape_str(self):

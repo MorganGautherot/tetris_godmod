@@ -339,7 +339,7 @@ class deep_bot():
     
     def final_model(self, inputs):
         x = self.base_model(inputs)
-        rotation = tf.keras.layers.Dense(units='2', activation = 'softmax', name='rotation')(x)
+        rotation = tf.keras.layers.Dense(units='4', activation = 'softmax', name='rotation')(x)
         column = tf.keras.layers.Dense(units = '10', activation = 'softmax', name = 'column')(x)
         model = tf.keras.models.Model(inputs=inputs, outputs = [rotation, column])
         return model

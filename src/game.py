@@ -6,6 +6,7 @@ from src.scraping import dataframe_creation
 import pygame
 from src.bot import random_bot
 import os
+import pandas as pd
 
 def get_sound(filename):
     return pygame.mixer.Sound(
@@ -27,14 +28,23 @@ class Tetris():
         self.next_tetromino = Tetrominoes()
 
 
-        matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                            self.matrix)
+
         
         if self.take_picture:
+
+            y_dataframe = pd.DataFrame([], columns=('name', 'path', 'column', 'rotation'))
+            y_dataframe.to_csv('y_dataframe.csv', index=False)
+
+            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
+                                                                self.matrix)
+
             self.tetris_window.redraw(self.tetris_window.screen, 
                                     matrix_and_tetromino,
                                     self.next_tetromino)
-            self.data_creation.screenshot('X', self.current_tetromino)
+
+                
+            self.data_creation.matrix_to_image(matrix_and_tetromino, self.current_tetromino)
+
 
         self.clock = pygame.time.Clock()
         self.base_downwards_speed = 0.8  # Move down every 400 ms
@@ -117,9 +127,9 @@ class Tetris():
             elif pressed(pygame.K_SPACE):
                 self.hard_drop(self.current_tetromino, self.matrix)
             elif pressed(pygame.K_t):
-                self.data_creation.screenshot('X', self.current_tetromino)
+                self.data_creation.matrix_to_image(self.tetris)
             elif pressed(pygame.K_y):
-                self.data_creation.screenshot('Y', self.current_tetromino)
+                self.data_creation.add_row_dataframe_y(self.current_tetromino)
 
     def rotation(self, tetromino, matrix)->None:
         """move the tetromino to the right"""
@@ -209,14 +219,17 @@ class Tetris():
     def lock_tetromino(self)->None:
         """Lock the tetromino to the matrix"""
 
-        matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                            self.matrix)
+
         if self.take_picture:
+
+            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
+                                                                self.matrix)
+
             self.tetris_window.redraw(self.tetris_window.screen, 
                                     matrix_and_tetromino,
                                     self.next_tetromino)
-        
-            self.data_creation.screenshot('Y', self.current_tetromino)
+                
+            self.data_creation.add_row_dataframe_y(self.current_tetromino)
 
         self.matrix = self.add_tetromino_to_matrix(self.current_tetromino, 
                                                     self.matrix)
@@ -231,13 +244,20 @@ class Tetris():
 
         self.next_tetromino = Tetrominoes()
         
-        matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                            self.matrix)
         if self.take_picture:
+
+            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
+                                                                    self.matrix)
+
             self.tetris_window.redraw(self.tetris_window.screen, 
                                     matrix_and_tetromino,
                                     self.next_tetromino)
-            self.data_creation.screenshot('X', self.current_tetromino)
+            
+
+ 
+                
+            self.data_creation.matrix_to_image(matrix_and_tetromino, self.current_tetromino)
+
 
         # game over
         if not(self.fits_in_matrix(self.current_tetromino.tetromino_position, 
