@@ -6,7 +6,7 @@ tetris = Tetris(take_picture = True)
 
 
 
-bot = deep_bot()
+#bot = deep_bot()
 
 
 while True:
@@ -23,7 +23,7 @@ while True:
     
     #random_bot(tetris)
     tetris.user_action()
-    bot.play(tetris)
+    #bot.play(tetris)
     #print(count_hole_number(tetris.matrix))
     #custom_metric(tetris.matrix)
     #system_expert(tetris)

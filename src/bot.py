@@ -332,7 +332,6 @@ class deep_bot():
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        x = tf.keras.layers.Dense(64, activation='relu')(x)
         x = tf.keras.layers.Dense(32, activation='relu')(x)
 
         return x
@@ -347,7 +346,7 @@ class deep_bot():
     def init_model(self):
         inputs = tf.keras.layers.Input(shape=(20, 10, 1))
         model = self.final_model(inputs)
-        model.load_weights('artefacts/trained_model.h5')
+        model.load_weights('artefacts/trained_model.hdf5')
         return model
 
 
@@ -374,8 +373,8 @@ class deep_bot():
         column = np.argmax(prediction[1])
 
         print('-----')
-        print(rotation)
-        print(column)      
+        print(f'rotation : {rotation}')
+        print(f'column : {column}')      
 
         self.move_tetromino(tetris, rotation, column)
 

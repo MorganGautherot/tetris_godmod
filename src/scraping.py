@@ -4,6 +4,7 @@ from PIL import ImageGrab
 import matplotlib.pyplot as plt
 import src.config as config
 import pandas as pd
+import os
 
 class dataframe_creation():
     def __init__(self):
@@ -22,6 +23,9 @@ class dataframe_creation():
             self.number_screenshot += 1
 
     def matrix_to_image(self, matrix_and_tetromino, current_tetromino):
+
+        if not(os.path.exists('X/')):
+            os.system('mkdir X')
 
         image_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH))
 
