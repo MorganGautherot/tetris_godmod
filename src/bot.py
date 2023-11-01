@@ -332,20 +332,14 @@ class deep_bot():
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        x = tf.keras.layers.Dense(32, activation='relu')(x)
-
-        return x
-    
-    def final_model(self, inputs):
-        x = self.base_model(inputs)
-        rotation = tf.keras.layers.Dense(units='4', activation = 'softmax', name='rotation')(x)
-        column = tf.keras.layers.Dense(units = '10', activation = 'softmax', name = 'column')(x)
-        model = tf.keras.models.Model(inputs=inputs, outputs = [rotation, column])
+        x = tf.keras.layers.Dense(64, activation='relu')(x)
+        output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
+        model = tf.keras.models.Model(inputs=inputs, outputs = output) 
         return model
 
     def init_model(self):
         inputs = tf.keras.layers.Input(shape=(20, 10, 1))
-        model = self.final_model(inputs)
+        model = self.base_model(inputs)
         model.load_weights('artefacts/trained_model.hdf5')
         return model
 
@@ -358,21 +352,37 @@ class deep_bot():
                 if not(tetris.matrix[i, j] is None):
                     matrix[i, j]=1
         
-        maitrix_shaped = np.expand_dims(np.expand_dims(matrix, axis=-1), axis=0)
+        maitrix_shaped = np.expand_dims(matrix, axis=-1)
 
         return maitrix_shaped
+
+    def no_whole(self, game_matrix):
+
+      gamme_matrix_without_current_tetromino = game_matrix.copy()
+
+      width, colmun, _ = gamme_matrix_without_current_tetromino.shape
+
+      for col in np.arange(colmun):
+        first_tetromino = np.argmax(gamme_matrix_without_current_tetromino[2:, col, :])
+
+        gamme_matrix_without_current_tetromino[first_tetromino:, col, :]=1
+
+      return gamme_matrix_without_current_tetromino
 
     def play(self, tetris):
 
         input_image = self.create_matrix(tetris)
 
+        
+        input_image = np.expand_dims(self.no_whole(input_image), axis=0)
 
         prediction = self.model.predict(input_image)
 
-        rotation = np.argmax(prediction[0])
-        column = np.argmax(prediction[1])
+        column = np.argmax(prediction)%10
+        rotation = int(np.floor(np.argmax(prediction)/10))
 
         print('-----')
+        print(np.argmax(prediction))
         print(f'rotation : {rotation}')
         print(f'column : {column}')      
 
