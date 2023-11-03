@@ -12,8 +12,6 @@ class dataframe_creation():
 
     def screenshot(self, folder:str, current_tetromino):
 
-
-
         tetromino_name = current_tetromino.tetromino_name.replace('_', '-') 
         screen = ImageGrab.grab(bbox=(370,120,1050,780))
 
@@ -22,7 +20,7 @@ class dataframe_creation():
         if folder=='Y':
             self.number_screenshot += 1
 
-    def matrix_to_image(self, matrix_and_tetromino, current_tetromino):
+    def game_board_to_image(self, matrix_and_tetromino, current_tetromino):
 
         if not(os.path.exists('X/')):
             os.system('mkdir X')

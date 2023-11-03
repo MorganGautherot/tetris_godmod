@@ -1,109 +1,129 @@
-from src.windows import windows
-from src.score import score
+from src.windows import Windows
+from src.score import Score
 from src.tetrominoes import Tetrominoes
 import src.config as config
 from src.scraping import dataframe_creation
 import pygame
-from src.bot import random_bot
-import os
 import pandas as pd
 
-def get_sound(filename):
-    return pygame.mixer.Sound(
-        os.path.join(os.path.dirname(__file__), "resources", filename)
-    )
 
-class Tetris():
+class Tetris:
+    def __init__(self, take_picture: bool = False, display: bool = True) -> None:
+        """
+        Initialization of the game
+        """
 
-    def __init__(self, take_picture = False):
+        # Save the frame of the game to train a deep learning modèle
         self.take_picture = take_picture
-        self.data_creation = dataframe_creation()
-        self.tetris_score = score()
-        self.tetris_window = windows(self.tetris_score)
-        self.matrix = dict()
+
+        self.display = display
+
+        # Initialization of the scoring module
+        self.tetris_score = Score()
+
+        if self.display:  # pragma: no cover
+            self.tetris_window = Windows(self.tetris_score)
+
+        # Game board initialization
+        self.game_board_matrix = dict()
         for y in range(config.MATRIX_HEIGHT):
             for x in range(config.MATRIX_WIDTH):
-                self.matrix[(y, x)] = None
+                self.game_board_matrix[(y, x)] = None
+
+        # Initialisation of the current tetromino
         self.current_tetromino = Tetrominoes()
+
+        # Initialisation of the nex tetromino
         self.next_tetromino = Tetrominoes()
 
+        if self.take_picture:  # pragma: no cover
+            # Initialization of the object to map game board into image
+            self.data_creation = dataframe_creation()
 
+            # Dataframe initialization to save the tetromino's final position
+            y_dataframe = pd.DataFrame(
+                [], columns=("name", "path", "column", "rotation")
+            )
+            y_dataframe.to_csv("y_dataframe.csv", index=False)
 
-        
-        if self.take_picture:
+            matrix_and_tetromino = self.add_tetromino_to_game_board_matrix(
+                self.current_tetromino, self.game_board_matrix
+            )
 
-            y_dataframe = pd.DataFrame([], columns=('name', 'path', 'column', 'rotation'))
-            y_dataframe.to_csv('y_dataframe.csv', index=False)
+            self.data_creation.game_board_to_image(
+                matrix_and_tetromino, self.current_tetromino
+            )
 
-            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                                self.matrix)
-
-            self.tetris_window.redraw(self.tetris_window.screen, 
-                                    matrix_and_tetromino,
-                                    self.next_tetromino)
-
-                
-            self.data_creation.matrix_to_image(matrix_and_tetromino, self.current_tetromino)
-
-
+        # Initialization of the time game
         self.clock = pygame.time.Clock()
-        self.base_downwards_speed = 0.8  # Move down every 400 ms
+        # Move down every 400 ms
+        self.base_downwards_speed = 0.8
         self.downwards_timer = 0
 
-        self.linescleared_sound = get_sound("linecleared.wav")
+    def tetromino_falls_over_time(self) -> None:
+        """
+        After a preset time, the current tetromino moves down one square in the game board
+        """
 
-    def tetromino_falls_over_time(self):
         timepassed = self.clock.tick(50)
-        self.downwards_speed = self.base_downwards_speed ** (1 + self.tetris_score.level / 10.0)
-        self.downwards_timer += timepassed/ 1000.0
+        self.downwards_speed = self.base_downwards_speed ** (
+            1 + self.tetris_score.level / 10.0
+        )
+        self.downwards_timer += timepassed / 1000.0
 
+        # If the time exceeds the preset time, move the tetromino downwards
         if self.downwards_timer > self.downwards_speed:
-            self.move_down(self.current_tetromino, self.matrix)
+            self.move_down()
             self.downwards_timer %= self.downwards_speed
 
-    def add_tetromino_to_matrix(self, tetromino, matrix):
-        """Add a tetromino to the matrix"""
+    @staticmethod
+    def add_tetromino_to_game_board_matrix(
+        tetromino: Tetrominoes, game_board_matrix: dict
+    ) -> dict:
+        """
+        Add a tetromino to the board game
+        """
 
-        matrix_copy = matrix.copy()
+        game_board_matrix_copy = game_board_matrix.copy()
         posY, posX = tetromino.tetromino_position
         shape = tetromino.tetromino_shape
 
         for x in range(posX, posX + len(shape)):
-             for y in range(posY, posY + len(shape)):
+            for y in range(posY, posY + len(shape)):
                 if shape[y - posY][x - posX]:
-                    matrix_copy[(y, x)] = ('block', tetromino)
+                    game_board_matrix_copy[(y, x)] = tetromino.tetromino_color
 
-        return matrix_copy
+        return game_board_matrix_copy
 
-    def fits_in_matrix(self, position, shape, matrix):
+    @staticmethod
+    def fits_in_game_board_matrix(
+        position: tuple, shape: list, game_board_matrix: dict
+    ) -> bool:
         """
         Checks if tetromino fits on the board
         """
         posY, posX = position
         for x in range(posX, posX + len(shape)):
             for y in range(posY, posY + len(shape)):
-
-                if (
-                    matrix.get((y, x), False) is False 
-                    and shape[y - posY][x - posX] 
-                    # outside matrix
-                    or matrix.get((y, x)) 
+                if (  # outside board game
+                    game_board_matrix.get((y, x), False) is False
                     and shape[y - posY][x - posX]
-                    and matrix[(y, x)][0] != "shadow"
                     # coordinate is occupied by something else which isn't a shadow
-                ):  
+                    or game_board_matrix.get((y, x))
+                    and shape[y - posY][x - posX]
+                ):
                     return False
-
         return True
 
-    def user_action(self)->None:
-        """Get user action and apply them to the game"""
+    def user_action(self) -> None:  # pragma: no cover
+        """
+        Get user action and apply them to the game
+        """
 
         pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
-        unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
 
         events = pygame.event.get()
-        
+
         for event in events:
             # Controls pausing and quitting the game.
             if event.type == pygame.QUIT:
@@ -114,158 +134,203 @@ class Tetris():
             # Controls movement of the tetromino
             elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
                 self.downwards_timer = 0
-                self.move_left(self.current_tetromino, self.matrix)
+                self.move_left(self.current_tetromino, self.game_board_matrix)
             elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
                 self.downwards_timer = 0
-                self.move_right(self.current_tetromino, self.matrix)
+                self.move_right(self.current_tetromino, self.game_board_matrix)
             elif pressed(pygame.K_DOWN) or pressed(pygame.K_s):
                 self.downwards_timer = 0
-                self.move_down(self.current_tetromino, self.matrix)
+                self.move_down(self.current_tetromino, self.game_board_matrix)
             elif pressed(pygame.K_UP) or pressed(pygame.K_w):
                 self.downwards_timer = 0
-                self.rotation(self.current_tetromino, self.matrix)
+                self.rotation()
             elif pressed(pygame.K_SPACE):
-                self.hard_drop(self.current_tetromino, self.matrix)
-            elif pressed(pygame.K_t):
-                self.data_creation.matrix_to_image(self.tetris)
-            elif pressed(pygame.K_y):
-                self.data_creation.add_row_dataframe_y(self.current_tetromino)
+                self.hard_drop(self.current_tetromino, self.game_board_matrix)
 
-    def rotation(self, tetromino, matrix)->None:
-        """move the tetromino to the right"""
-        new_shape = tetromino.rotate(tetromino.tetromino_shape, 1)
-        posY, posX = tetromino.tetromino_position
+    def rotation(self) -> None:
+        """
+        Rotate the tetromino
+        """
 
-        if self.fits_in_matrix((posY, posX), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-        elif self.fits_in_matrix((posY, posX-1), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX-1)
-        elif self.fits_in_matrix((posY, posX+1), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX+1)
-        elif self.fits_in_matrix((posY, posX-2), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX-2)
-        elif self.fits_in_matrix((posY, posX+2), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX+2)
-        elif self.fits_in_matrix((posY, posX-3), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX-3)
-        elif self.fits_in_matrix((posY, posX+3), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX+3)
-        elif self.fits_in_matrix((posY, posX-4), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX-4)
-        elif self.fits_in_matrix((posY, posX+4), new_shape, matrix):
-            tetromino.tetromino_shape = new_shape
-            tetromino.tetromino_position = (posY, posX+4)
+        new_shape = self.current_tetromino.rotate(
+            self.current_tetromino.tetromino_shape, times=1
+        )
+        posY, posX = self.current_tetromino.tetromino_position
 
-    def move_right(self, tetromino, matrix)->None:
-        """move the tetromino to the right"""
-        posY, posX = tetromino.tetromino_position
-        shape =  tetromino.tetromino_shape
-        if self.fits_in_matrix((posY, posX+1), shape, matrix):
-            tetromino.move_right()
+        if self.fits_in_game_board_matrix(
+            (posY, posX), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+        elif self.fits_in_game_board_matrix(
+            (posY, posX - 1), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY, posX - 1)
+        elif self.fits_in_game_board_matrix(
+            (posY, posX + 1), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY, posX + 1)
+        elif self.fits_in_game_board_matrix(
+            (posY - 1, posX), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY - 1, posX)
+        elif self.fits_in_game_board_matrix(
+            (posY - 1, posX + 1), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY - 1, posX + 1)
+        elif self.fits_in_game_board_matrix(
+            (posY - 1, posX - 1), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY - 1, posX - 1)
+        elif self.fits_in_game_board_matrix(
+            (posY - 2, posX), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY - 2, posX)
+        elif self.fits_in_game_board_matrix(
+            (posY, posX - 2), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY, posX - 2)
+        elif self.fits_in_game_board_matrix(
+            (posY, posX + 2), new_shape, self.game_board_matrix
+        ):
+            self.current_tetromino.tetromino_shape = new_shape
+            self.current_tetromino.tetromino_position = (posY, posX + 2)
 
-    def move_left(self, tetromino, matrix)->None:
-        """move the tetromino to the left"""
-        posY, posX = tetromino.tetromino_position
-        shape =  tetromino.tetromino_shape
-        if self.fits_in_matrix((posY, posX-1), shape, matrix):
-            tetromino.move_left()
+    def move_right(self) -> None:
+        """
+        Move the tetromino to the right
+        """
+        posY, posX = self.current_tetromino.tetromino_position
+        shape = self.current_tetromino.tetromino_shape
+        if self.fits_in_game_board_matrix(
+            (posY, posX + 1), shape, self.game_board_matrix
+        ):
+            self.current_tetromino.move_right()
 
-    def move_down(self, tetromino, matrix)->None:
-        """move the tetromino to the down"""
-        posY, posX = tetromino.tetromino_position
-        shape =  tetromino.tetromino_shape
-        if self.fits_in_matrix((posY+1, posX), shape, matrix):
-            tetromino.move_down()
-        else : 
+    def move_left(self) -> None:
+        """
+        Move the tetromino to the left
+        """
+        posY, posX = self.current_tetromino.tetromino_position
+        shape = self.current_tetromino.tetromino_shape
+        if self.fits_in_game_board_matrix(
+            (posY, posX - 1), shape, self.game_board_matrix
+        ):
+            self.current_tetromino.move_left()
+
+    def move_down(self) -> None:
+        """
+        Move the tetromino to the down
+        """
+        posY, posX = self.current_tetromino.tetromino_position
+        shape = self.current_tetromino.tetromino_shape
+        if self.fits_in_game_board_matrix(
+            (posY + 1, posX), shape, self.game_board_matrix
+        ):
+            self.current_tetromino.move_down()
+        else:
             self.fall_down()
 
-    def fall_down(self):
+    def fall_down(self) -> None:
+        """
+        The tetromino has arrived at the bottom of the platform
+        """
+        # Add the tetromino to the board
         self.lock_tetromino()
+
+        # Remove complete lines
         lines_cleared = self.remove_lines()
 
+        # Update the score
         if lines_cleared:
             self.tetris_score.mark_score(lines_cleared)
-
-            if lines_cleared >= 4:
-                self.linescleared_sound.play()
-
-        else : 
+        else:
             self.tetris_score.reset_combo()
 
-    def last_valid_position(self, tetromino, matrix)-> None:
-        posY, posX = tetromino.tetromino_position
+    def last_valid_position(
+        self, tetromino: Tetrominoes, game_board_matrix: dict
+    ) -> tuple:
+        """
+        Return the last valid position for the lowest lines at the current column position
+        """
+        _, posX = tetromino.tetromino_position
         shape = tetromino.tetromino_shape
         new_posY = 1
-        while self.fits_in_matrix((new_posY, posX), shape, matrix):
+        while self.fits_in_game_board_matrix(
+            (new_posY, posX), shape, game_board_matrix
+        ):
             new_posY += 1
-        
+
         new_posY -= 1
-        return (new_posY, posX), shape
-    
-    def hard_drop(self, tetromino, matrix):
-        posY, posX = tetromino.tetromino_position
-        (new_posY, posX), shape = self.last_valid_position(tetromino, matrix)
-        tetromino.tetromino_position = (new_posY, posX)
+        return (new_posY, posX)
+
+    def hard_drop(self) -> None:
+        """
+        Put the tetromino at the lowest possible position
+        """
+        _, posX = self.current_tetromino.tetromino_position
+        (new_posY, posX) = self.last_valid_position(
+            self.current_tetromino, self.game_board_matrix
+        )
+        self.current_tetromino.tetromino_position = (new_posY, posX)
         self.fall_down()
 
+    def lock_tetromino(self) -> None:
+        """
+        Lock the tetromino to the matrix
+        """
 
-    def lock_tetromino(self)->None:
-        """Lock the tetromino to the matrix"""
+        if self.take_picture:  # pragma: no cover
+            matrix_and_tetromino = self.add_tetromino_to_game_board_matrix(
+                self.current_tetromino, self.game_board_matrix
+            )
 
+            self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
 
-        if self.take_picture:
-
-            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                                self.matrix)
-
-            self.tetris_window.redraw(self.tetris_window.screen, 
-                                    matrix_and_tetromino,
-                                    self.next_tetromino)
-                
             self.data_creation.add_row_dataframe_y(self.current_tetromino)
 
-        self.matrix = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                    self.matrix)
-        
+        self.game_board_matrix = self.add_tetromino_to_game_board_matrix(
+            self.current_tetromino, self.game_board_matrix
+        )
 
         self.set_tetrominoes()
 
-    def set_tetrominoes(self)->None:
-        """Get new tetrominoes"""
+    def set_tetrominoes(self) -> None:
+        """
+        Get new tetrominoes
+        """
 
         self.current_tetromino = self.next_tetromino
 
         self.next_tetromino = Tetrominoes()
-        
-        if self.take_picture:
 
-            matrix_and_tetromino = self.add_tetromino_to_matrix(self.current_tetromino, 
-                                                                    self.matrix)
+        if self.take_picture:  # pragma: no cover
+            matrix_and_tetromino = self.add_tetromino_to_game_board_matrix(
+                self.current_tetromino, self.game_board_matrix
+            )
 
-            self.tetris_window.redraw(self.tetris_window.screen, 
-                                    matrix_and_tetromino,
-                                    self.next_tetromino)
-            
+            self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
 
- 
-                
-            self.data_creation.matrix_to_image(matrix_and_tetromino, self.current_tetromino)
-
+            self.data_creation.game_board_to_image(
+                matrix_and_tetromino, self.current_tetromino
+            )
 
         # game over
-        if not(self.fits_in_matrix(self.current_tetromino.tetromino_position, 
-                            self.current_tetromino.tetromino_shape, 
-                            self.matrix)):
+        if not (
+            self.fits_in_game_board_matrix(
+                self.current_tetromino.tetromino_position,
+                self.current_tetromino.tetromino_shape,
+                self.game_board_matrix,
+            )
+        ):  # pragma: no cover
             exit()
 
-        
     def remove_lines(self):
         """
         Removes lines from the board
@@ -275,7 +340,7 @@ class Tetris():
             # Checks if row if full, for each row
             line = (y, [])
             for x in range(config.MATRIX_WIDTH):
-                if self.matrix[(y, x)]:
+                if self.game_board_matrix[(y, x)]:
                     line[1].append(x)
             if len(line[1]) == config.MATRIX_WIDTH:
                 lines.append(y)
@@ -283,10 +348,11 @@ class Tetris():
         for line in sorted(lines):
             # Moves lines down one row
             for x in range(config.MATRIX_WIDTH):
-                self.matrix[(line, x)] = None
+                self.game_board_matrix[(line, x)] = None
             for y in range(0, line + 1)[::-1]:
                 for x in range(config.MATRIX_WIDTH):
-                    self.matrix[(y, x)] = self.matrix.get((y - 1, x), None)
+                    self.game_board_matrix[(y, x)] = self.game_board_matrix.get(
+                        (y - 1, x), None
+                    )
 
         return len(lines)
-        

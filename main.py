@@ -14,13 +14,12 @@ while True:
     # Time of the game
     #tetris.tetromino_falls_over_time()
 
-    matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
-                                                          tetris.matrix)
+    matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
+                                                          tetris.game_board_matrix)
     
-    tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                                matrix_and_tetromino,
+    tetris.tetris_window.redraw(matrix_and_tetromino,
                                 tetris.next_tetromino)
-    
+
     #random_bot(tetris)
     tetris.user_action()
     bot.play(tetris)

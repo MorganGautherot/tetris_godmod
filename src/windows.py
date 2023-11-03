@@ -1,106 +1,93 @@
 import pygame
 import src.config as config
 import random
+from src.score import Score
+from src.tetrominoes import Tetrominoes
 
-class windows():
+class Windows():  # pragma: no cover
 
-    def __init__(self, score)->None:
-        """Initialize the windows of the game"""
+    def __init__(self, 
+                 score:Score
+                 )->None:
+        """
+        Initialize the windows of the game
+        """
 
         # get game score information
         self.tetris_score = score
 
+        # Pygame initialization
         pygame.init()
 
+        # Screen configuration
         self.screen = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
 
+        # Set the caption of the game
         pygame.display.set_caption("Tetris")
 
-        self.screen.blit(self.construct_background_image(self.screen.get_size()), (0, 0))
-
+        # Initilization of the game
         tetris_border = pygame.Surface(
             (
                 config.MATRIX_WIDTH * config.BLOCKSIZE + config.BORDERWIDTH * 2,
-                config.VISIBLE_MATRIX_HEIGHT * config.BLOCKSIZE + config.BORDERWIDTH * 2,
+                config.MATRIX_HEIGHT * config.BLOCKSIZE + config.BORDERWIDTH * 2,
             )
         )
 
+        # Initilization of the board game        
         self.surface = self.screen.subsurface(
             pygame.Rect(
                 (config.MATRIX_OFFSET + config.BORDERWIDTH, config.MATRIX_OFFSET + config.BORDERWIDTH),
-                (config.MATRIX_WIDTH * config.BLOCKSIZE, (config.MATRIX_HEIGHT - 2) * config.BLOCKSIZE),
+                (config.MATRIX_WIDTH * config.BLOCKSIZE, (config.MATRIX_HEIGHT ) * config.BLOCKSIZE),
             )
         )
 
+        # Make color
         tetris_border.fill(config.BORDERCOLOR)
 
-
+        # Display the game on screen
         self.screen.blit(tetris_border, (config.MATRIX_OFFSET, config.MATRIX_OFFSET))
 
-    def construct_background_image(self, size)->pygame.surface.Surface:
-        """
-        Constructs background image
-        """
-        surf = pygame.Surface(size)
-
-        boxsize = 8
-        bordersize = 1
-        vals = "1235"  # only the lower values, for darker colors and greater fear
-        arr = pygame.PixelArray(surf)
-        for x in range(0, len(arr), boxsize):
-            for y in range(0, len(arr[x]), boxsize):
-                color = int(
-                    "".join([random.choice(vals) + random.choice(vals) for _ in range(3)]),
-                    16,
-                )
-
-                for LX in range(x, x + (boxsize - bordersize)):
-                    for LY in range(y, y + (boxsize - bordersize)):
-                        if LX < len(arr) and LY < len(arr[x]):
-                            arr[LX][LY] = color
-        del arr
-        return surf
-
-    def redraw(self, 
-               screen,
-               matrix,
-               next_tetromino)->None:
+    def redraw(self,
+               board_game:dict,
+               next_tetromino:Tetrominoes
+               )->None:
         """
         Redraws the information panel and next termoino panel
         """
         
         next_tetromino_surface = self.construct_surface_of_next_tetromino(next_tetromino)
-        self.blit_next_tetromino(next_tetromino_surface, screen)
 
-        self.blit_info(screen)
+        self.blit_next_tetromino(next_tetromino_surface)
 
-        self.draw_surface(matrix)
+        self.blit_info()
+
+        self.draw_surface(board_game)
 
         pygame.display.flip()
 
-    def draw_surface(self, matrix):
+    def draw_surface(self, 
+                     board_game:dict
+                     )->None:
         """
         Draws the image of the current tetromino
         """
 
         for y in range(config.MATRIX_HEIGHT):
             for x in range(config.MATRIX_WIDTH):
-                #                                       I hide the 2 first rows by drawing them outside of the surface
+
                 block_location = pygame.Rect(
-                    x * config.BLOCKSIZE, (y * config.BLOCKSIZE - 2 * config.BLOCKSIZE), config.BLOCKSIZE, config.BLOCKSIZE
+                    x * config.BLOCKSIZE, y * config.BLOCKSIZE, config.BLOCKSIZE, config.BLOCKSIZE
                 )
 
-                if matrix[(y, x)] is None:
+                if board_game[(y, x)] is None:
                     self.surface.fill(config.BGCOLOR, block_location)
                 else:
-
-                    if matrix[(y, x)][0] == "shadow":
-
-                        self.surface.fill(config.BGCOLOR, block_location)
-                    tetromino_block = self.block(matrix[(y, x)][1].tetromino_color)
+                    tetromino_block = self.block(board_game[(y, x)])
                     self.surface.blit(tetromino_block, block_location)
 
-    def block(self, color, shadow=False):
+    def block(self, 
+              color:tuple, 
+              )->pygame.surface.Surface:
         """
         Sets visual information for tetromino
         """
@@ -114,15 +101,8 @@ class windows():
             "cyan": (10, 255, 226),
         }
 
-        if shadow:
-            end = [90]  # end is the alpha value
-        else:
-            end = (
-                []
-            )  # Adding this to the end will not change the array, thus no alpha value
-
         border = pygame.Surface((config.BLOCKSIZE, config.BLOCKSIZE), pygame.SRCALPHA, 32)
-        border.fill(list(map(lambda c: c * 0.5, colors[color])) + end)
+        border.fill(list(map(lambda c: c * 0.5, colors[color])))
 
         borderwidth = 2
 
@@ -141,7 +121,7 @@ class windows():
                             colors[color],
                         )
                     )
-                    + end
+
                 )
 
         del boxarr  # deleting boxarr or else the box surface will be 'locked' or something like that and won't blit.
@@ -149,7 +129,9 @@ class windows():
 
         return border
 
-    def construct_surface_of_next_tetromino(self, next_tetromino):
+    def construct_surface_of_next_tetromino(self, 
+                                            next_tetromino:Tetrominoes
+                                            )->pygame.surface.Surface:
         """
         Draws the image of the next tetromino
         """
@@ -165,9 +147,12 @@ class windows():
                         self.block(next_tetromino.tetromino_color),
                         (x * config.BLOCKSIZE, y * config.BLOCKSIZE),
                     )
+
         return surf
     
-    def blit_next_tetromino(self, tetromino_surf, screen):
+    def blit_next_tetromino(self, 
+                            tetromino_surf:pygame.surface.Surface
+                            )->pygame.surface.Surface:
         """
         Draws the next tetromino in a box to the side of the board
         """
@@ -190,9 +175,13 @@ class windows():
         center = areasize / 2 - tetromino_surf_size / 2
         area.blit(tetromino_surf, (center, center))
 
-        screen.blit(area, area.get_rect(top=config.MATRIX_OFFSET, centerx=config.TRICKY_CENTERX))
+        self.screen.blit(area, area.get_rect(top=config.MATRIX_OFFSET, centerx=config.TRICKY_CENTERX))
 
-    def renderpair(self, text, val, font, width):
+    def renderpair(self, 
+                   text:str, 
+                   val:int, 
+                   font:pygame.font.Font, 
+                   width:int)->pygame.surface.Surface:
         text = font.render(text, True, config.TEXTCOLOR)
         val = font.render(str(val), True, config.TEXTCOLOR)
 
@@ -207,7 +196,7 @@ class windows():
         )
         return surf
 
-    def blit_info(self, screen):
+    def blit_info(self)->None:
         """
         Draws information panel
         """
@@ -260,6 +249,6 @@ class windows():
             ),
         )
 
-        screen.blit(
+        self.screen.blit(
             area, area.get_rect(bottom=config.HEIGHT - config.MATRIX_OFFSET, centerx=config.TRICKY_CENTERX)
         )

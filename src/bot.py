@@ -1,25 +1,112 @@
 import numpy as np
-from src.config import *
 import copy
+import src.config as config
 import time, random
 import tensorflow as tf
+from src.game import Tetris
 
-def random_bot(tetris):
-    """Make a random action for the tetrominoes"""
-    choice = np.random.randint(4)
+class RandomBot():
 
-    if choice == 0:
-        tetris.move_left(tetris.current_tetromino, tetris.matrix)
-    elif choice == 1:
-        tetris.move_right(tetris.current_tetromino, tetris.matrix)
-    elif choice == 2:
-        tetris.rotation(tetris.current_tetromino, tetris.matrix)
-    elif choice == 3:
-        tetris.move_down(tetris.current_tetromino, tetris.matrix)
+    def __init__(self, tetris:Tetris)->None:
+        """
+        Initialization of the random bot
+        """
+        self.tetris = tetris
+
+    def play(self)->None:
+        """
+        Make a random action for the tetrominoes
+        """
+        choice = np.random.randint(4)
+
+        if choice == 0:
+            self.tetris.move_left()
+        elif choice == 1:
+            self.tetris.move_right()
+        elif choice == 2:
+            self.tetris.rotation()
+        elif choice == 3:
+            self.tetris.move_down()
+
+class ExpertBot():
+
+    def __init__(self, tetris:Tetris)->None:
+        """
+        Initialization of the expert bot
+        """
+        self.tetris = tetris
+
+    def move_estimation(self, cost_function:callable):
+        """
+        Estimation of the cost for every tetromino move possible
+        """
+
+        best_position = list()
+        best_rotation = list()
+        minimum_cost = np.inf
+        possible_rotation = 4
+
+        current_tetromino_copy = copy.deepcopy(self.tetris.current_tetromino)
+
+        # Try every rotation
+        for rotation in range(1, possible_rotation+1):
+
+
+            new_shape = self.current_tetromino.rotate(self.current_tetromino.tetromino_shape)
+            current_tetromino_copy.tetromino_shape = new_shape
+
+            # For every rotation try every x position
+            for width in range(-2, config.MATRIX_WIDTH):   
+                
+                # start at the highest point and try every position in the x axis
+                current_tetromino_copy.tetromino_position = (0, width)
+
+                if tetris.fits_in_matrix(current_tetromino_copy.tetromino_position,
+                                current_tetromino_copy.tetromino_shape,
+                                tetris.matrix):
+
+                    futur_position, rotated_shape = tetris.last_valid_position(current_tetromino_copy, 
+                                                                            tetris.matrix)
+                    current_tetromino_copy.tetromino_position = futur_position
+
+                    matrix_and_tetromino = tetris.add_tetromino_to_matrix(current_tetromino_copy, 
+                                                                        tetris.matrix)
+
+                    position_cost = cost_function(matrix_and_tetromino) 
+
+                    #tetris.tetris_window.redraw(tetris.tetris_window.screen, 
+                    #                            matrix_and_tetromino,
+                    #                            tetris.next_tetromino)
+                    #time.sleep(0.5)
+
+                    # If the cost function is below the minimum cost
+                    if position_cost < minimum_cost:
+                        best_position = list([futur_position])
+                        best_shape = list([rotated_shape])
+                        minimum_cost = position_cost
+
+                    # Add the move with other move at the same cost
+                    elif position_cost == minimum_cost:
+                        best_position.append(futur_position)
+                        best_shape.append(rotated_shape)
+
+        # Take only one rotation or position from the possible move
+        if len(best_position) > 1:
+            best_id = random.randint(0, len(best_position)-1)
+
+            best_position = best_position[best_id]
+            best_shape = best_shape[best_id]
+        else:
+            best_position = best_position[0]
+            best_shape = best_shape[0]
+
+        return best_position, best_shape, minimum_cost
+
+
 
 def count_hole_number(game_matrix:dict):
     """ 
-    Count the nuber of hole in the tetris matrix. 
+    Count the number of hole in the tetris matrix. 
     A hole is an empty space cover by a tetrominoes
     """
     count_hole = 0
@@ -141,7 +228,7 @@ def move_estimation(tetris, cost_function:callable)->tuple:
     current_tetromino_copy = copy.deepcopy(tetris.current_tetromino)
 
     # Try every rotation
-    for rotation in range(1, possible_rotation+1): 
+    for rotation in range(1, possible_rotation+1):
 
         tetris.rotation(current_tetromino_copy, tetris.matrix)
 
@@ -349,7 +436,7 @@ class deep_bot():
 
         for i in range(20):
             for j in range(10):
-                if not(tetris.matrix[i, j] is None):
+                if not(tetris.game_board_matrix[i, j] is None):
                     matrix[i, j]=1
         
         maitrix_shaped = np.expand_dims(matrix, axis=-1)
@@ -394,14 +481,13 @@ class deep_bot():
 
         for _ in range(rotation):
             
-            tetris.rotation(tetris.current_tetromino, tetris.matrix)
+            tetris.rotation()
 
-            matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
-                                                    tetris.matrix)
-            tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                                    matrix_and_tetromino,
+            matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
+                                                    tetris.game_board_matrix)
+            tetris.tetris_window.redraw(matrix_and_tetromino,
                                     tetris.next_tetromino)
-            time.sleep(1)
+            time.sleep(0.5)
 
 
         binary_shape = np.where(np.array(tetris.current_tetromino.tetromino_shape)=='X', 1, 0)
@@ -418,24 +504,22 @@ class deep_bot():
         if movement > 0:
             for _ in range(movement):
 
-                tetris.move_right(tetris.current_tetromino, tetris.matrix)
+                tetris.move_right()
 
-                matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
-                                                    tetris.matrix)
-                tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                                    matrix_and_tetromino,
+                matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
+                                                    tetris.game_board_matrix)
+                tetris.tetris_window.redraw(matrix_and_tetromino,
                                     tetris.next_tetromino)
-                time.sleep(1)
+                time.sleep(0.5)
         elif movement < 0:
             for _ in range(-movement):
 
-                tetris.move_left(tetris.current_tetromino, tetris.matrix)
-                matrix_and_tetromino = tetris.add_tetromino_to_matrix(tetris.current_tetromino, 
-                                                    tetris.matrix)
-                tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                                    matrix_and_tetromino,
+                tetris.move_left()
+                matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
+                                                    tetris.game_board_matrix)
+                tetris.tetris_window.redraw(matrix_and_tetromino,
                                     tetris.next_tetromino)
-                time.sleep(1)
+                time.sleep(0.5)
 
-        time.sleep(1)
-        tetris.hard_drop(tetris.current_tetromino, tetris.matrix)        
+        time.sleep(0.3)
+        tetris.hard_drop(tetris.current_tetromino, tetris.game_board_matrix)        
