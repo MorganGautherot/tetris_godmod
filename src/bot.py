@@ -232,7 +232,7 @@ class ExpertBot():
 
         self.tetris.hard_drop()
 
-        time.sleep(0.2)
+        #time.sleep(0.2)
 
 class deep_bot():
 
