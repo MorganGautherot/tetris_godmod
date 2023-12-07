@@ -236,9 +236,9 @@ class ExpertBot():
 
 class deep_bot():
 
-    def __init__(self):
+    def __init__(self, model_path:str ='artefacts/trained_model.hdf5'):
 
-        self.model = self.init_model()
+        self.model = self.init_model(model_path)
 
     def base_model(self, inputs):
 
@@ -255,10 +255,10 @@ class deep_bot():
         model = tf.keras.models.Model(inputs=inputs, outputs = output) 
         return model
 
-    def init_model(self):
+    def init_model(self, model_path):
         inputs = tf.keras.layers.Input(shape=(20, 10, 1))
         model = self.base_model(inputs)
-        model.load_weights('artefacts/trained_model.hdf5')
+        model.load_weights(model_path)
         return model
 
 
@@ -353,4 +353,8 @@ class deep_bot():
                 time.sleep(0.5)
 
         time.sleep(0.3)
-        tetris.hard_drop()        
+        tetris.hard_drop()     
+        matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
+                                            tetris.game_board_matrix) 
+        tetris.tetris_window.redraw(matrix_and_tetromino,
+                                    tetris.next_tetromino)  
