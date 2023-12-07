@@ -119,16 +119,24 @@ def test_rotate_hate():
     tetromino = Tetrominoes()
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 1)
-    assert new_shape == ((None, "X", None), (None, "X", "X"), (None, "X", None))
+    assert new_shape == ((None, "X", None), 
+                         (None, "X", "X"), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 2)
-    assert new_shape == ((None, None, None), ("X", "X", "X"), (None, "X", None))
+    assert new_shape == ((None, None, None), 
+                         ("X", "X", "X"), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 3)
-    assert new_shape == ((None, "X", None), ("X", "X", None), (None, "X", None))
+    assert new_shape == ((None, "X", None), 
+                         ("X", "X", None), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 4)
-    assert new_shape == ((None, "X", None), ("X", "X", "X"), (None, None, None))
+    assert new_shape == ((None, "X", None), 
+                         ("X", "X", "X"), 
+                         (None, None, None))
 
 
 def test_rotate_square():
@@ -159,16 +167,24 @@ def test_rotate_left_gun():
     tetromino = Tetrominoes()
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 1)
-    assert new_shape == ((None, "X", "X"), (None, "X", None), (None, "X", None))
+    assert new_shape == ((None, "X", "X"), 
+                         (None, "X", None), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 2)
-    assert new_shape == ((None, None, None), ("X", "X", "X"), (None, None, "X"))
+    assert new_shape == ((None, None, None), 
+                         ("X", "X", "X"), 
+                         (None, None, "X"))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 3)
-    assert new_shape == ((None, "X", None), (None, "X", None), ("X", "X", None))
+    assert new_shape == ((None, "X", None), 
+                         (None, "X", None), 
+                         ("X", "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 4)
-    assert new_shape == (("X", None, None), ("X", "X", "X"), (None, None, None))
+    assert new_shape == (("X", None, None), 
+                         ("X", "X", "X"), 
+                         (None, None, None))
 
 
 def test_rotate_right_gun():
@@ -179,16 +195,24 @@ def test_rotate_right_gun():
     tetromino = Tetrominoes()
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 1)
-    assert new_shape == ((None, "X", None), (None, "X", None), (None, "X", "X"))
+    assert new_shape == ((None, "X", None), 
+                         (None, "X", None), 
+                         (None, "X", "X"))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 2)
-    assert new_shape == ((None, None, None), ("X", "X", "X"), ("X", None, None))
+    assert new_shape == ((None, None, None), 
+                         ("X", "X", "X"), 
+                         ("X", None, None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 3)
-    assert new_shape == (("X", "X", None), (None, "X", None), (None, "X", None))
+    assert new_shape == (("X", "X", None), 
+                         (None, "X", None), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 4)
-    assert new_shape == ((None, None, "X"), ("X", "X", "X"), (None, None, None))
+    assert new_shape == ((None, None, "X"), 
+                         ("X", "X", "X"), 
+                         (None, None, None))
 
 
 def test_rotate_left_snake():
@@ -199,16 +223,24 @@ def test_rotate_left_snake():
     tetromino = Tetrominoes()
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 1)
-    assert new_shape == ((None, None, "X"), (None, "X", "X"), (None, "X", None))
+    assert new_shape == ((None, None, "X"), 
+                         (None, "X", "X"), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 2)
-    assert new_shape == ((None, None, None), ("X", "X", None), (None, "X", "X"))
+    assert new_shape == ((None, None, None), 
+                         ("X", "X", None), 
+                         (None, "X", "X"))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 3)
-    assert new_shape == ((None, "X", None), ("X", "X", None), ("X", None, None))
+    assert new_shape == ((None, "X", None), 
+                         ("X", "X", None), 
+                         ("X", None, None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 4)
-    assert new_shape == (("X", "X", None), (None, "X", "X"), (None, None, None))
+    assert new_shape == (("X", "X", None), 
+                         (None, "X", "X"), 
+                         (None, None, None))
 
 
 def test_rotate_right_snake():
@@ -219,16 +251,24 @@ def test_rotate_right_snake():
     tetromino = Tetrominoes()
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 1)
-    assert new_shape == ((None, "X", None), (None, "X", "X"), (None, None, "X"))
+    assert new_shape == ((None, "X", None), 
+                         (None, "X", "X"), 
+                         (None, None, "X"))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 2)
-    assert new_shape == ((None, None, None), (None, "X", "X"), ("X", "X", None))
+    assert new_shape == ((None, None, None), 
+                         (None, "X", "X"), 
+                         ("X", "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 3)
-    assert new_shape == (("X", None, None), ("X", "X", None), (None, "X", None))
+    assert new_shape == (("X", None, None), 
+                         ("X", "X", None), 
+                         (None, "X", None))
 
     new_shape = tetromino.rotate(tetromino.tetromino_shape, 4)
-    assert new_shape == ((None, "X", "X"), ("X", "X", None), (None, None, None))
+    assert new_shape == ((None, "X", "X"), 
+                         ("X", "X", None), 
+                         (None, None, None))
 
 
 def test_rotate_long():

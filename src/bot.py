@@ -1,9 +1,12 @@
 import numpy as np
 import copy
 import src.config as config
+from src.tetrominoes import Tetrominoes
 import time, random
 import tensorflow as tf
 from src.game import Tetris
+import pandas as pd
+import time
 
 class RandomBot():
 
@@ -36,24 +39,131 @@ class ExpertBot():
         """
         self.tetris = tetris
 
-    def move_estimation(self, cost_function:callable):
+    def count_min_height(self, game_matrix:dict)->float:
+        """
+        Return the minimum height of the game matrix
+        """
+        min_height = np.inf
+        for width in range(config.MATRIX_WIDTH):
+            for height in range(config.MATRIX_HEIGHT):
+                if not(game_matrix[height, width] is None) and isinstance(game_matrix[height, width][0], str) :
+                    if config.MATRIX_HEIGHT-height < min_height:
+                        min_height = config.MATRIX_HEIGHT-height
+                    
+        return min_height  
+    
+
+    def count_hole_column(self, game_matrix:dict, 
+                          minimum_line:int=2)->float:
+        """
+        coutn the number of line hole column
+        """
+        count_long_hole = 0
+        for width in range(config.MATRIX_WIDTH):
+            row = 0
+            for height in range(config.MATRIX_HEIGHT-1, -1, -1):
+                
+                if ((width-1) < 0 or not(game_matrix[height, width-1] is None)) and ((width+1) > 9 or not(game_matrix[height, width+1] is None)) and game_matrix[height, width] is None:
+                    row +=1
+
+                elif  not(game_matrix[height, width] is None):
+                    row=0
+
+            if row > minimum_line :
+                count_long_hole += row
+                    
+        return count_long_hole 
+
+    def count_max_height(self, game_matrix:dict)->float:
+        """
+        Return the max height of the game board matrix
+        """
+        max_height = 0
+        for width in range(config.MATRIX_WIDTH):
+            for height in range(config.MATRIX_HEIGHT):
+                if not(game_matrix[height, width] is None) and isinstance(game_matrix[height, width][0], str) :
+                    if config.MATRIX_HEIGHT-height > max_height:
+                        max_height = config.MATRIX_HEIGHT-height
+                    
+        return max_height  
+    
+    def is_line(self, game_matrix:dict)->float:
+        """
+        Detect if there is a line in the game matrix
+        """
+        nb_line = 0
+        for height in range(config.MATRIX_HEIGHT):
+            nb_blocks = 0
+            for width in range(config.MATRIX_WIDTH):
+                
+                if not(game_matrix[height, width] is None):
+                    nb_blocks+=1
+
+            if nb_blocks==config.MATRIX_WIDTH:
+                nb_line += 1
+
+                
+        return np.where(nb_line==0, 0, -300 ** nb_line)
+
+    def custom_metric(self, game_matrix:dict)->float:
+        """
+        Mix different cost function
+        """
+        nb_hole = self.count_hole_number(game_matrix)
+        max_height = self.count_max_height(game_matrix)
+        min_height = self.count_min_height(game_matrix)
+        line = self.is_line(game_matrix)
+        hole_colmun = self.count_hole_column(game_matrix)
+
+        return nb_hole + max_height + line - min_height + hole_colmun
+
+    def count_hole_number(self, game_matrix:dict)->float:
+        """ 
+        Count the number of hole in the tetris matrix. 
+        A hole is an empty space cover by a tetrominoes
+        """
+        count_hole = 0
+        number_hole = 0
+        for width in range(config.MATRIX_WIDTH):
+
+            number_hole = 0
+            for height in range(config.MATRIX_HEIGHT-1, -1, -1):
+                if game_matrix[height, width] is None:
+
+                    number_hole +=1
+                if not(game_matrix[height, width] is None):
+                    count_hole += number_hole
+                    number_hole = 0
+
+        return count_hole
+
+    def move_estimation(self, 
+                        tetromino:Tetrominoes,
+                        game_board_matrix:dict,
+                        cost_function:callable,
+                        recursivity_id:bool=True)->pd.DataFrame:
         """
         Estimation of the cost for every tetromino move possible
         """
 
-        best_position = list()
-        best_rotation = list()
-        minimum_cost = np.inf
-        possible_rotation = 4
+        move_cost_dataframe = pd.DataFrame([], columns=('id_column', 
+                                                        'id_rotation',
+                                                        'cost'))
+        if tetromino.tetromino_name in ['right_gun', 'left_gun', 'hat']:
+            possible_rotation = 4
+        elif tetromino.tetromino_name in ['long', 'right_snake', 'left_snake']:
+            possible_rotation = 2
+        else :
+            possible_rotation = 1
 
-        current_tetromino_copy = copy.deepcopy(self.tetris.current_tetromino)
+        current_tetromino_copy = copy.deepcopy(tetromino)
 
         # Try every rotation
-        for rotation in range(1, possible_rotation+1):
+        for rotation in range(0, possible_rotation):
 
-
-            new_shape = self.current_tetromino.rotate(self.current_tetromino.tetromino_shape)
-            current_tetromino_copy.tetromino_shape = new_shape
+            if rotation > 0:
+                new_shape = current_tetromino_copy.rotate(current_tetromino_copy.tetromino_shape)
+                current_tetromino_copy.tetromino_shape = new_shape
 
             # For every rotation try every x position
             for width in range(-2, config.MATRIX_WIDTH):   
@@ -61,347 +171,68 @@ class ExpertBot():
                 # start at the highest point and try every position in the x axis
                 current_tetromino_copy.tetromino_position = (0, width)
 
-                if tetris.fits_in_matrix(current_tetromino_copy.tetromino_position,
-                                current_tetromino_copy.tetromino_shape,
-                                tetris.matrix):
-
-                    futur_position, rotated_shape = tetris.last_valid_position(current_tetromino_copy, 
-                                                                            tetris.matrix)
-                    current_tetromino_copy.tetromino_position = futur_position
-
-                    matrix_and_tetromino = tetris.add_tetromino_to_matrix(current_tetromino_copy, 
-                                                                        tetris.matrix)
-
-                    position_cost = cost_function(matrix_and_tetromino) 
-
-                    #tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                    #                            matrix_and_tetromino,
-                    #                            tetris.next_tetromino)
-                    #time.sleep(0.5)
-
-                    # If the cost function is below the minimum cost
-                    if position_cost < minimum_cost:
-                        best_position = list([futur_position])
-                        best_shape = list([rotated_shape])
-                        minimum_cost = position_cost
-
-                    # Add the move with other move at the same cost
-                    elif position_cost == minimum_cost:
-                        best_position.append(futur_position)
-                        best_shape.append(rotated_shape)
-
-        # Take only one rotation or position from the possible move
-        if len(best_position) > 1:
-            best_id = random.randint(0, len(best_position)-1)
-
-            best_position = best_position[best_id]
-            best_shape = best_shape[best_id]
-        else:
-            best_position = best_position[0]
-            best_shape = best_shape[0]
-
-        return best_position, best_shape, minimum_cost
-
-
-
-def count_hole_number(game_matrix:dict):
-    """ 
-    Count the number of hole in the tetris matrix. 
-    A hole is an empty space cover by a tetrominoes
-    """
-    count_hole = 0
-    number_hole = 0
-    for width in range(MATRIX_WIDTH):
-
-        number_hole = 0
-        for height in range(MATRIX_HEIGHT-1, -1, -1):
-            if game_matrix[height, width] is None:
-
-                number_hole +=1
-            if not(game_matrix[height, width] is None):
-                count_hole += number_hole
-                number_hole = 0
-
-    return count_hole
-
-def count_total_height(game_matrix:dict):
-    total_height = 0
-    for width in range(MATRIX_WIDTH):
-        for height in range(MATRIX_HEIGHT):
-            if not(game_matrix[height, width] is None) and isinstance(game_matrix[height, width][0], str) :
-                total_height += MATRIX_HEIGHT-height
-    return total_height
-
-def count_hole_line(game_matrix:dict):
-    total_width = 0
-    for height in range(MATRIX_HEIGHT):
-        hole_in_line = 0
-        for width in range(MATRIX_WIDTH):
-            if not(game_matrix[height, width] is None) :
-                hole_in_line += 1
-                
-        if hole_in_line>0:
-            total_width += (MATRIX_WIDTH-hole_in_line)*(MATRIX_HEIGHT-height)
-    return total_width    
-
-def count_max_height(game_matrix:dict):
-    max_height = 0
-    for width in range(MATRIX_WIDTH):
-        for height in range(MATRIX_HEIGHT):
-            if not(game_matrix[height, width] is None) and isinstance(game_matrix[height, width][0], str) :
-                if MATRIX_HEIGHT-height > max_height:
-                    max_height = MATRIX_HEIGHT-height
-                
-    return max_height  
-
-def count_min_height(game_matrix:dict):
-    min_height = np.inf
-    for width in range(MATRIX_WIDTH):
-        for height in range(MATRIX_HEIGHT):
-            if not(game_matrix[height, width] is None) and isinstance(game_matrix[height, width][0], str) :
-                if MATRIX_HEIGHT-height < min_height:
-                    min_height = MATRIX_HEIGHT-height
-                
-    return min_height  
-
-def count_long_open_hole(game_matrix:dict):
-    max_height = count_max_height(game_matrix)
-
-    count_long_hole = 0
-    for width in range(MATRIX_WIDTH):
-
-        for height in range(MATRIX_HEIGHT):
-            if not(game_matrix[height, width] is None) or MATRIX_HEIGHT-1==height:
-                
-                if max_height - (MATRIX_HEIGHT-height) >= 4 and MATRIX_HEIGHT-1==height:
-        
-                    count_long_hole += max_height - (MATRIX_HEIGHT-height-1)
-                elif max_height - (MATRIX_HEIGHT-height) >= 4 :
-                    count_long_hole += max_height - (MATRIX_HEIGHT-height)
-                break         
-                
-    return count_long_hole 
-
-def is_line(game_matrix:dict):
-    is_a_line = 0
-    for height in range(MATRIX_HEIGHT):
-        nb_blocks = 0
-        for width in range(MATRIX_WIDTH):
-            
-            if not(game_matrix[height, width] is None):
-                nb_blocks+=1
-
-        if nb_blocks==MATRIX_WIDTH:
-            is_a_line = -200
-
-                
-    return is_a_line 
-
-def custom_metric(game_matrix:dict):
-    number_hole = count_hole_number(game_matrix)
-    total_height = count_total_height(game_matrix)/20
-    total_width = count_hole_line(game_matrix)/20
-    max_height = count_max_height(game_matrix)
-    min_height = count_min_height(game_matrix)
-    long_hole = count_long_open_hole(game_matrix)
-    line = is_line(game_matrix)
-
-    #print(f'number_hole : {number_hole}')
-    #print(f'total_height : {total_height}')
-    #print(f'total_width : {total_width}')
-    #print(f'max_height : {max_height}')
-    #print(f'min_height : {min_height}')
-    #print(f'long_hole : {long_hole}')
-    #print(f'is_line : {line}')
-
-    return number_hole + total_height + total_width + max_height - min_height + long_hole + line
-
-def move_estimation(tetris, cost_function:callable)->tuple:
-    """ 
-    Try every posssible move and return the best roation and movement of the tetrominoes
-    """
-    best_position = list()
-    best_rotation = list()
-    minimum_cost = np.inf
-    possible_rotation = 4
-
-    current_tetromino_copy = copy.deepcopy(tetris.current_tetromino)
-
-    # Try every rotation
-    for rotation in range(1, possible_rotation+1):
-
-        tetris.rotation(current_tetromino_copy, tetris.matrix)
-
-        # For every rotation try every x position
-        for width in range(-3, MATRIX_WIDTH):   
-            
-            # start at the highest point and try every position in the x axis
-            posY, posX = current_tetromino_copy.tetromino_position
-            current_tetromino_copy.tetromino_position = (0, width)
-
-            if tetris.fits_in_matrix(current_tetromino_copy.tetromino_position,
-                              current_tetromino_copy.tetromino_shape,
-                              tetris.matrix):
-
-                futur_position, rotated_shape = tetris.last_valid_position(current_tetromino_copy, 
-                                                                        tetris.matrix)
-                current_tetromino_copy.tetromino_position = futur_position
-
-                matrix_and_tetromino = tetris.add_tetromino_to_matrix(current_tetromino_copy, 
-                                                                    tetris.matrix)
-
-                position_cost = cost_function(matrix_and_tetromino) 
-
-                #tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                #                            matrix_and_tetromino,
-                #                            tetris.next_tetromino)
-                #time.sleep(0.5)
-
-                # If the cost function is below the minimum cost
-                if position_cost < minimum_cost:
-                    best_position = list([futur_position])
-                    best_shape = list([rotated_shape])
-                    minimum_cost = position_cost
-
-                # Add the move with other move at the same cost
-                elif position_cost == minimum_cost:
-                    best_position.append(futur_position)
-                    best_shape.append(rotated_shape)
-
-    # Take only one rotation or position from the possible move
-    if len(best_position) > 1:
-        best_id = random.randint(0, len(best_position)-1)
-
-        best_position = best_position[best_id]
-        best_shape = best_shape[best_id]
-    else:
-        best_position = best_position[0]
-        best_shape = best_shape[0]
-
-    return best_position, best_shape, minimum_cost
-
-
-def double_move_estimation(tetris, cost_function:callable)->tuple:
-    """ 
-    Try every posssible move and return the best roation and movement of the tetrominoes
-    """
-    best_position = list()
-    best_rotation = list()
-    minimum_cost = np.inf
-    possible_rotation = 4
-
-    current_tetromino_copy = copy.deepcopy(tetris.current_tetromino)
-
-    # Try every rotation
-    for rotation in range(1, possible_rotation+1): 
-
-        tetris.rotation(current_tetromino_copy, tetris.matrix)
-
-        # For every rotation try every x position
-        for width in range(-3, MATRIX_WIDTH):   
-            
-            # start at the highest point and try every position in the x axis
-            posY, posX = current_tetromino_copy.tetromino_position
-            current_tetromino_copy.tetromino_position = (0, width)
-
-            if tetris.fits_in_matrix(current_tetromino_copy.tetromino_position,
-                              current_tetromino_copy.tetromino_shape,
-                              tetris.matrix):
-
-                futur_position, rotated_shape = tetris.last_valid_position(current_tetromino_copy, 
-                                                                        tetris.matrix)
-                current_tetromino_copy.tetromino_position = futur_position
-
-                matrix_and_tetromino = tetris.add_tetromino_to_matrix(current_tetromino_copy, 
-                                                                    tetris.matrix)
-
-                next_tetromino_copy = copy.deepcopy(tetris.next_tetromino)
-
-                # Try every rotation
-                for double_rotation in range(1, possible_rotation+1): 
-
-                    tetris.rotation(next_tetromino_copy, matrix_and_tetromino)
-
-                    # For every rotation try every x position
-                    for double_width in range(-3, MATRIX_WIDTH):  
-                
-
-                        # start at the highest point and try every position in the x axis
-                        double_posY, double_posX = next_tetromino_copy.tetromino_position
-                        next_tetromino_copy.tetromino_position = (0, double_width)
-
-                        if tetris.fits_in_matrix(next_tetromino_copy.tetromino_position,
-                                        next_tetromino_copy.tetromino_shape,
-                                        matrix_and_tetromino):
-
-                            double_futur_position, double_rotated_shape = tetris.last_valid_position(next_tetromino_copy, 
-                                                                                    matrix_and_tetromino)
-                            next_tetromino_copy.tetromino_position = double_futur_position
-
-                            double_matrix_and_tetromino = tetris.add_tetromino_to_matrix(next_tetromino_copy, 
-                                                                                matrix_and_tetromino)
-
-
-                            position_cost = cost_function(double_matrix_and_tetromino)
-
-                            # If the cost function is below the minimum cost
-                            if position_cost < minimum_cost:
-                                best_position = list([futur_position])
-                                best_shape = list([rotated_shape])
-                                minimum_cost = position_cost
-
-                            # Add the move with other move at the same cost
-                            elif position_cost == minimum_cost:
-                                best_position.append(futur_position)
-                                best_shape.append(rotated_shape)
-#
-
-                            position_cost = cost_function(matrix_and_tetromino)
-                            
-                            #tetris.tetris_window.redraw(tetris.tetris_window.screen, 
-                            #                            matrix_and_tetromino,
-                            #                            tetris.next_tetromino)
-#
-
-                            # If the cost function is below the minimum cost
-                            if position_cost < minimum_cost:
-                                best_position = list([futur_position])
-                                best_shape = list([rotated_shape])
-                                minimum_cost = position_cost
-
-                            # Add the move with other move at the same cost
-                            elif position_cost == minimum_cost:
-                                best_position.append(futur_position)
-                                best_shape.append(rotated_shape)
-
-    # Take only one rotation or position from the possible move
-    if len(best_position) > 1:
-        best_id = random.randint(0, len(best_position)-1)
-
-        best_position = best_position[best_id]
-        best_shape = best_shape[best_id]
-    else:
-        best_position = best_position[0]
-        best_shape = best_shape[0]
-
-    return best_position, best_shape, minimum_cost
-
-
-def system_expert(tetris):
-    """
-    place the tetrominoes minimizing the hole
-    """
-
-    (best_pos_y, best_pos_x), best_shape, minimum_cost = double_move_estimation(tetris, custom_metric)
-    
-    tetris.current_tetromino.tetromino_shape = best_shape
-    tetris.current_tetromino.tetromino_position = (0, best_pos_x)
-
-    tetris.hard_drop(tetris.current_tetromino, tetris.matrix)
-
-    #time.sleep(0.01)
-
-
+                if self.tetris.fits_in_game_board_matrix(current_tetromino_copy.tetromino_position,
+                                                         current_tetromino_copy.tetromino_shape,
+                                                         game_board_matrix):
+
+
+                    last_position = self.tetris.last_valid_position(current_tetromino_copy,
+                                                                    game_board_matrix)
+
+                    current_tetromino_copy.tetromino_position = last_position
+
+                    matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(current_tetromino_copy, 
+                                                                        game_board_matrix)
+                    
+                    if recursivity_id :
+                        first_cost = cost_function(matrix_and_tetromino)
+                        recursive_cost = self.move_estimation(self.tetris.next_tetromino,
+                                                                   matrix_and_tetromino,
+                                                                   self.custom_metric,
+                                                                   recursivity_id=False)
+                        position_cost = recursive_cost['cost'].min()*0.5 + first_cost
+                    else :
+                        position_cost = cost_function(matrix_and_tetromino)
+
+                    #self.tetris.tetris_window.redraw(matrix_and_tetromino,
+                    #                                 current_tetromino_copy)
+                    #time.sleep(0.1)
+   
+                    new_line = pd.DataFrame([[width, 
+                                              rotation,
+                                              position_cost]], 
+                                            columns=('id_column', 
+                                                        'id_rotation',
+                                                        'cost'))
+
+                    move_cost_dataframe = pd.concat([move_cost_dataframe, new_line])
+
+        return move_cost_dataframe
+
+    def play(self)->None:
+        """
+        place the tetrominoes minimizing the hole
+        """
+
+        move_cost_dataframe = self.move_estimation(self.tetris.current_tetromino,
+                                                   self.tetris.game_board_matrix,
+                                                    self.custom_metric,
+                                                    recursivity_id=True)
+
+        minimum_move_cost_dataframe = move_cost_dataframe[move_cost_dataframe['cost']==move_cost_dataframe['cost'].min()]
+        #print(minimum_move_cost_dataframe)
+        next_position = minimum_move_cost_dataframe.sample(1)
+        #print(next_position)
+
+        new_shape = self.tetris.current_tetromino.rotate(self.tetris.current_tetromino.tetromino_shape,
+                                                  times=next_position.loc[0, 'id_rotation'])
+        self.tetris.current_tetromino.tetromino_shape = new_shape
+   
+        self.tetris.current_tetromino.tetromino_position = (0, next_position.loc[0, 'id_column'])
+
+        self.tetris.hard_drop()
+
+        time.sleep(0.2)
 
 class deep_bot():
 
@@ -522,4 +353,4 @@ class deep_bot():
                 time.sleep(0.5)
 
         time.sleep(0.3)
-        tetris.hard_drop(tetris.current_tetromino, tetris.game_board_matrix)        
+        tetris.hard_drop()        

@@ -2,7 +2,7 @@ from src.windows import Windows
 from src.score import Score
 from src.tetrominoes import Tetrominoes
 import src.config as config
-from src.scraping import dataframe_creation
+from src.save_examples import dataframe_creation
 import pygame
 import pandas as pd
 
@@ -134,18 +134,18 @@ class Tetris:
             # Controls movement of the tetromino
             elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
                 self.downwards_timer = 0
-                self.move_left(self.current_tetromino, self.game_board_matrix)
+                self.move_left()
             elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
                 self.downwards_timer = 0
-                self.move_right(self.current_tetromino, self.game_board_matrix)
+                self.move_right()
             elif pressed(pygame.K_DOWN) or pressed(pygame.K_s):
                 self.downwards_timer = 0
-                self.move_down(self.current_tetromino, self.game_board_matrix)
+                self.move_down()
             elif pressed(pygame.K_UP) or pressed(pygame.K_w):
                 self.downwards_timer = 0
                 self.rotation()
             elif pressed(pygame.K_SPACE):
-                self.hard_drop(self.current_tetromino, self.game_board_matrix)
+                self.hard_drop()
 
     def rotation(self) -> None:
         """

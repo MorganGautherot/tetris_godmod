@@ -43,11 +43,15 @@ class Tetrominoes:
         self.tetromino_color = tetrominoes_dict[self.tetromino_name].color
         self.tetromino_position = (0, 4) if len(self.tetromino_shape) == 2 else (0, 3)
 
+    def add_rotation_count(self):
+        self.rotation = (self.rotation + 1) % 4
+
     def rotate(self, shape: tuple, times: int = 1) -> tuple:
         """
         Rotate a shape to the right
         """
-        self.rotation = (self.rotation + times) % 4
+        if times != 0 :
+            self.add_rotation_count()
         return shape if times == 0 else self.rotate(tuple(zip(*shape[::-1])), times - 1)
 
     def move_right(self) -> None:
