@@ -7,8 +7,15 @@ import os
 
 class dataframe_creation():
 
-    def __init__(self):
+    def __init__(self, training_id:int=0):
         self.number_screenshot = 0
+        self.training_id = training_id
+
+        # Dataframe initialization to save the tetromino's final position
+        y_dataframe = pd.DataFrame(
+            [], columns=("name", "path", "column", "rotation")
+        )
+        y_dataframe.to_csv(f'y_{self.training_id}_dataframe.csv', index=False)
 
     def game_board_to_image(self, 
                             matrix_and_tetromino:dict, 
@@ -18,8 +25,12 @@ class dataframe_creation():
         Transform the game board matrix into an image
         """
 
-        if not(os.path.exists('X/')):
-            os.system('mkdir X')
+        saving_path = f'X_{self.training_id}/'
+
+        if not(os.path.exists(saving_path)):
+            
+            os.mkdir(saving_path)
+            
 
         image_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH))
 
@@ -29,7 +40,7 @@ class dataframe_creation():
                 image_matrix[key] = 255
 
         self.tetromino_name = current_tetromino.tetromino_name.replace('_', '-') 
-        self.path = f'X/{self.number_screenshot}_{self.tetromino_name}.png'
+        self.path = f'{saving_path}/{self.number_screenshot}_{self.tetromino_name}.png'
         cv2.imwrite(self.path, image_matrix[:, :])
 
         self.number_screenshot += 1
@@ -38,7 +49,9 @@ class dataframe_creation():
                             current_tetromino:Tetrominoes
                             )->None:
 
-        y_dataframe = pd.read_csv('y_dataframe.csv')
+        dataframe_path = f'y_{self.training_id}_dataframe.csv'
+
+        y_dataframe = pd.read_csv(dataframe_path)
 
         first_column = self.shape_into_first_column(current_tetromino)
 
@@ -50,7 +63,7 @@ class dataframe_creation():
 
         print(f'rotation : {current_tetromino.rotation}')
         print(f'column : {first_column}')
-        new_y_dataframe.to_csv('y_dataframe.csv', index=False)
+        new_y_dataframe.to_csv(dataframe_path, index=False)
 
     def shape_into_first_column(self, tetromino:Tetrominoes)->np.ndarray:
         """

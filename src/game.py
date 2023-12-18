@@ -8,10 +8,12 @@ import pandas as pd
 
 
 class Tetris:
-    def __init__(self, take_picture: bool = False, display: bool = True) -> None:
+    def __init__(self, take_picture: bool = False, display: bool = True, training_id:int=0) -> None:
         """
         Initialization of the game
         """
+
+        self.game_over = False
 
         # Save the frame of the game to train a deep learning modèle
         self.take_picture = take_picture
@@ -21,8 +23,8 @@ class Tetris:
         # Initialization of the scoring module
         self.tetris_score = Score()
 
-        if self.display:  # pragma: no cover
-            self.tetris_window = Windows(self.tetris_score)
+        #if self.display:  # pragma: no cover
+        self.tetris_window = Windows(self.tetris_score)
 
         # Game board initialization
         self.game_board_matrix = dict()
@@ -38,13 +40,7 @@ class Tetris:
 
         if self.take_picture:  # pragma: no cover
             # Initialization of the object to map game board into image
-            self.data_creation = dataframe_creation()
-
-            # Dataframe initialization to save the tetromino's final position
-            y_dataframe = pd.DataFrame(
-                [], columns=("name", "path", "column", "rotation")
-            )
-            y_dataframe.to_csv("y_dataframe.csv", index=False)
+            self.data_creation = dataframe_creation(training_id)
 
             matrix_and_tetromino = self.add_tetromino_to_game_board_matrix(
                 self.current_tetromino, self.game_board_matrix
@@ -127,9 +123,9 @@ class Tetris:
         for event in events:
             # Controls pausing and quitting the game.
             if event.type == pygame.QUIT:
-                exit()
+                self.game_over = True
             elif pressed(pygame.K_ESCAPE):
-                exit()
+                self.game_over = True
 
             # Controls movement of the tetromino
             elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
@@ -291,7 +287,8 @@ class Tetris:
                 self.current_tetromino, self.game_board_matrix
             )
 
-            self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
+            if self.display :
+                self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
 
             self.data_creation.add_row_dataframe_y(self.current_tetromino)
 
@@ -314,8 +311,8 @@ class Tetris:
             matrix_and_tetromino = self.add_tetromino_to_game_board_matrix(
                 self.current_tetromino, self.game_board_matrix
             )
-
-            self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
+            if self.display:
+                self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
 
             self.data_creation.game_board_to_image(
                 matrix_and_tetromino, self.current_tetromino
@@ -329,7 +326,7 @@ class Tetris:
                 self.game_board_matrix,
             )
         ):  # pragma: no cover
-            exit()
+            self.game_over = True
 
     def remove_lines(self):
         """
