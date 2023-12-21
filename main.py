@@ -7,14 +7,14 @@ from src.bot import deep_bot, ExpertBot
 
 display = False
 
-for i in range(0, 1000):
+for i in range(10000, 20000):
     tetris = Tetris(take_picture = True, 
                     training_id=i,
                     display=display)
     bot = ExpertBot(tetris)
     cmpt = 0
     tmp_score = 0
-    while not(tetris.game_over) and cmpt < 10:
+    while not(tetris.game_over) and cmpt < 1:
 
         # Time of the game
         #tetris.tetromino_falls_over_time()

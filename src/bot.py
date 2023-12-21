@@ -241,8 +241,8 @@ class deep_bot():
         self.model = self.init_model(model_path)
 
     def base_model(self, inputs):
-
-        x = tf.keras.layers.Conv2D(8, (3, 3), padding="same", activation='relu', input_shape=(20, 10, 1))(inputs)
+        x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
+        x = tf.keras.layers.Conv2D(8, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(16, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
@@ -262,12 +262,12 @@ class deep_bot():
         return model
 
 
-    def create_matrix(self, tetris):
+    def create_matrix(self, matrix_and_tetromino):
         matrix = np.zeros((20, 10))
 
         for i in range(20):
             for j in range(10):
-                if not(tetris.game_board_matrix[i, j] is None):
+                if not(matrix_and_tetromino[i, j] is None):
                     matrix[i, j]=1
         
         maitrix_shaped = np.expand_dims(matrix, axis=-1)
@@ -289,10 +289,15 @@ class deep_bot():
 
     def play(self, tetris):
 
-        input_image = self.create_matrix(tetris)
-
+        matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
+                                                            tetris.game_board_matrix)
         
-        input_image = np.expand_dims(self.no_whole(input_image), axis=0)
+
+        input_image = self.create_matrix(matrix_and_tetromino)
+        
+        #input_image = np.expand_dims(self.no_whole(input_image), axis=0)
+        input_image = np.expand_dims(input_image, axis=0)
+        print(input_image[0, :, :, 0])
 
         prediction = self.model.predict(input_image)
 
