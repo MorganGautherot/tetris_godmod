@@ -1,74 +1,76 @@
 from __future__ import print_function
 from collections import namedtuple
+import random
 
-X, O = 'X', None
 Tetromino = namedtuple("Tetrimino", "color shape")
 
-tetrominoes = {
-    "long": Tetromino(color="blue",
-                      shape=((O,O,O,O),
-                             (X,X,X,X),
-                             (O,O,O,O),
-                             (O,O,O,O))),
-    "square": Tetromino(color="yellow",
-                        shape=((X,X),
-                               (X,X))),
-    "hat": Tetromino(color="pink",
-                     shape=((O,X,O),
-                            (X,X,X),
-                            (O,O,O))),
-    "right_snake": Tetromino(color="green",
-                             shape=((O,X,X),
-                                    (X,X,O),
-                                    (O,O,O))),
-    "left_snake": Tetromino(color="red",
-                            shape=((X,X,O),
-                                   (O,X,X),
-                                   (O,O,O))),
-    "left_gun": Tetromino(color="cyan",
-                          shape=((X,O,O),
-                                 (X,X,X),
-                                 (O,O,O))),
-    "right_gun": Tetromino(color="orange",
-                           shape=((O,O,X),
-                                  (X,X,X),
-                                  (O,O,O)))
+tetrominoes_dict = {
+    "long": Tetromino(
+        color="blue", shape=((None, None, None, None),
+                             ("X", "X", "X", "X"),
+                             (None, None, None, None),
+                             (None, None, None, None))),
+    "square": Tetromino(color="yellow", shape=(("X", "X"),
+                                               ("X", "X"))),
+    "hat": Tetromino(color="pink", shape=((None, "X", None),
+                                          ("X", "X", "X"),
+                                          (None, None, None))),
+    "right_snake": Tetromino(color="green", shape=((None, "X", "X"),
+                                                   ("X", "X", None),
+                                                   (None, None, None))),
+    "left_snake": Tetromino(color="red", shape=(("X", "X", None),
+                                                (None, "X", "X"),
+                                                (None, None, None))),
+    "left_gun": Tetromino(color="cyan", shape=(("X", None, None),
+                                               ("X", "X", "X"),
+                                               (None, None, None))),
+    "right_gun": Tetromino(color="orange", shape=((None, None, "X"),
+                                                  ("X", "X", "X"),
+                                                  (None, None, None))),
 }
-list_of_tetrominoes = list(tetrominoes.values())
 
-def rotate(shape, times=1):
-    """ Rotate a shape to the right """
-    return shape if times == 0 else rotate(tuple(zip(*shape[::-1])), times-1)
+tetrominoes_list = list(tetrominoes_dict.keys())
 
 
-def shape_str(shape):
-    """ Return a string of a shape in human readable form """
-    return '\n'.join(''.join(map({'X': 'X', None: 'O'}.get, line))
-                     for line in shape)
+class Tetrominoes:
+    def __init__(self) -> None:
+        """
+        Initialization of a tetrominoes
+        """
+        self.rotation = 0
+        self.tetromino_name = random.choice(tetrominoes_list)
+        self.tetromino_shape = tetrominoes_dict[self.tetromino_name].shape
+        self.tetromino_color = tetrominoes_dict[self.tetromino_name].color
+        self.tetromino_position = (0, 4) if len(self.tetromino_shape) == 2 else (0, 3)
 
-def shape(shape):
-    """ Print a shape in human readable form """
-    print(shape_str(shape))
-def test():
-    tetromino_shapes = [t.shape for t in list_of_tetrominoes]
-    map(rotate,    tetromino_shapes)
-    map(shape,     tetromino_shapes)
-    map(shape_str, tetromino_shapes)
+    def add_rotation_count(self):
+        self.rotation = (self.rotation + 1) % 4
 
-    assert shape_str(tetrominoes["left_snake"].shape) == "XXO\nOXX\nOOO"
+    def rotate(self, shape: tuple, times: int = 1) -> tuple:
+        """
+        Rotate a shape to the right
+        """
+        if times != 0 :
+            self.add_rotation_count()
+        return shape if times == 0 else self.rotate(tuple(zip(*shape[::-1])), times - 1)
 
-    assert rotate(tetrominoes["square"].shape) == tetrominoes["square"].shape
+    def move_right(self) -> None:
+        """
+        Change the position of the tetromino
+        """
+        posY, posX = self.tetromino_position
+        self.tetromino_position = posY, posX + 1
 
-    assert rotate(tetrominoes["right_snake"].shape, 4) == tetrominoes["right_snake"].shape
+    def move_left(self) -> None:
+        """
+        Change the position of the tetromino
+        """
+        posY, posX = self.tetromino_position
+        self.tetromino_position = posY, posX - 1
 
-    assert rotate(tetrominoes["hat"].shape)    == ((O,X,O),
-                                                   (O,X,X),
-                                                   (O,X,O))
-
-    assert rotate(tetrominoes["hat"].shape, 2) == ((O,O,O),
-                                                   (X,X,X),
-                                                   (O,X,O))
-    print("All tests passed in {}, things seems to be working alright".format(__file__))
-
-if __name__ == '__main__':
-    test()
+    def move_down(self) -> None:
+        """
+        Change the position of the tetromino
+        """
+        posY, posX = self.tetromino_position
+        self.tetromino_position = posY + 1, posX
