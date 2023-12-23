@@ -234,15 +234,32 @@ class ExpertBot():
 
         #time.sleep(0.2)
 
-class deep_bot():
+class DeepBot():
 
-    def __init__(self, model_path:str ='artefacts/trained_model.hdf5'):
+    def __init__(self, 
+                 tetris:Tetris,
+                 model_path:str ='artefacts/trained_model.hdf5',
+                 model_architecture:str='complex_model',
+                 display:bool=False)->None: # pragma: no cover
+        """
+        Initialize the bot using deep learning
+        """
 
-        self.model = self.init_model(model_path)
+        self.display = display
+        if model_architecture == 'simple_model':
+            self.init_simple_model()
+        else :
+            self.init_complex_model()
+        self.model.load_weights(model_path)
+        self.tetris = tetris
 
-    def base_model(self, inputs):
-        x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
-        x = tf.keras.layers.Conv2D(8, (3, 3), padding="same", activation='relu')(x)
+    def init_simple_model(self)->None: # pragma: no cover
+        """
+        Initialization of the architecture of the model used to predict 
+        the colmun and position of the current tetromino
+        """
+        inputs = tf.keras.layers.Input(shape=(20, 10, 1))
+        x = tf.keras.layers.Conv2D(8, (3, 3), padding="same", activation='relu')(inputs)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(16, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
@@ -252,17 +269,32 @@ class deep_bot():
         x = tf.keras.layers.Flatten()(x)
         x = tf.keras.layers.Dense(64, activation='relu')(x)
         output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
-        model = tf.keras.models.Model(inputs=inputs, outputs = output) 
-        return model
-
-    def init_model(self, model_path):
+        self.model = tf.keras.models.Model(inputs=inputs, outputs = output) 
+                
+    def init_complex_model(self)->None: # pragma: no cover
+        """
+        Initialization of the architecture of the model used to predict 
+        the colmun and position of the current tetromino
+        """
         inputs = tf.keras.layers.Input(shape=(20, 10, 1))
-        model = self.base_model(inputs)
-        model.load_weights(model_path)
-        return model
+        x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
+        x = tf.keras.layers.Conv2D(16, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.Flatten()(x)
+        x = tf.keras.layers.Dense(64, activation='relu')(x)
+        output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
+        self.model = tf.keras.models.Model(inputs=inputs, outputs = output) 
+                
 
-
-    def create_matrix(self, matrix_and_tetromino):
+    def create_matrix(self, matrix_and_tetromino:dict)->np.ndarray:
+        """ 
+        Convert the game board from dict to np.array
+        """
         matrix = np.zeros((20, 10))
 
         for i in range(20):
@@ -271,6 +303,7 @@ class deep_bot():
                     matrix[i, j]=1
         
         maitrix_shaped = np.expand_dims(matrix, axis=-1)
+        maitrix_shaped = np.expand_dims(maitrix_shaped, axis=0)
 
         return maitrix_shaped
 
@@ -287,16 +320,18 @@ class deep_bot():
 
       return gamme_matrix_without_current_tetromino
 
-    def play(self, tetris):
+    def play(self)->None:
+        """
+        Move tetromino in the right line and colmun according to
+        the board game using deep learning model
+        """
 
-        matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
-                                                            tetris.game_board_matrix)
+        matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(self.tetris.current_tetromino, 
+                                                            self.tetris.game_board_matrix)
         
-
         input_image = self.create_matrix(matrix_and_tetromino)
         
-        #input_image = np.expand_dims(self.no_whole(input_image), axis=0)
-        input_image = np.expand_dims(input_image, axis=0)
+
         print(input_image[0, :, :, 0])
 
         prediction = self.model.predict(input_image)
@@ -309,24 +344,25 @@ class deep_bot():
         print(f'rotation : {rotation}')
         print(f'column : {column}')      
 
-        self.move_tetromino(tetris, rotation, column)
+        self.move_tetromino(rotation, column)
 
-    def move_tetromino(self, tetris, rotation, column):
+    def move_tetromino(self, rotation, column):
 
-        (posY, posX) = tetris.current_tetromino.tetromino_position
+        (posY, posX) = self.tetris.current_tetromino.tetromino_position
 
         for _ in range(rotation):
             
-            tetris.rotation()
+            self.tetris.rotation()
 
-            matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
-                                                    tetris.game_board_matrix)
-            tetris.tetris_window.redraw(matrix_and_tetromino,
-                                    tetris.next_tetromino)
-            time.sleep(0.5)
+            if self.display:
+                matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(self.tetris.current_tetromino, 
+                                                        self.tetris.game_board_matrix)
+                self.tetris.tetris_window.redraw(matrix_and_tetromino,
+                                        self.tetris.next_tetromino)
+                time.sleep(0.5)
 
 
-        binary_shape = np.where(np.array(tetris.current_tetromino.tetromino_shape)=='X', 1, 0)
+        binary_shape = np.where(np.array(self.tetris.current_tetromino.tetromino_shape)=='X', 1, 0)
         shape_in_box = np.sum(binary_shape, axis=0)
 
         for i in range(len(shape_in_box)):
@@ -340,26 +376,31 @@ class deep_bot():
         if movement > 0:
             for _ in range(movement):
 
-                tetris.move_right()
+                self.tetris.move_right()
 
-                matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
-                                                    tetris.game_board_matrix)
-                tetris.tetris_window.redraw(matrix_and_tetromino,
-                                    tetris.next_tetromino)
-                time.sleep(0.5)
+                if self.display:
+                    matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(self.tetris.current_tetromino, 
+                                                        self.tetris.game_board_matrix)
+                    self.tetris.tetris_window.redraw(matrix_and_tetromino,
+                                        self.tetris.next_tetromino)
+                    time.sleep(0.5)
         elif movement < 0:
             for _ in range(-movement):
 
-                tetris.move_left()
-                matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
-                                                    tetris.game_board_matrix)
-                tetris.tetris_window.redraw(matrix_and_tetromino,
-                                    tetris.next_tetromino)
-                time.sleep(0.5)
+                self.tetris.move_left()
+                if self.display:
+                    matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(self.tetris.current_tetromino, 
+                                                        self.tetris.game_board_matrix)
+                    self.tetris.tetris_window.redraw(matrix_and_tetromino,
+                                        self.tetris.next_tetromino)
+                    time.sleep(0.5)
 
-        time.sleep(0.3)
-        tetris.hard_drop()     
-        matrix_and_tetromino = tetris.add_tetromino_to_game_board_matrix(tetris.current_tetromino, 
-                                            tetris.game_board_matrix) 
-        tetris.tetris_window.redraw(matrix_and_tetromino,
-                                    tetris.next_tetromino)  
+        
+        self.tetris.hard_drop()  
+
+        if self.display:   
+            time.sleep(0.3)
+            matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(self.tetris.current_tetromino, 
+                                                self.tetris.game_board_matrix) 
+            self.tetris.tetris_window.redraw(matrix_and_tetromino,
+                                        self.tetris.next_tetromino)  

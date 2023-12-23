@@ -23,8 +23,9 @@ class Tetris:
         # Initialization of the scoring module
         self.tetris_score = Score()
 
-        #if self.display:  # pragma: no cover
-        self.tetris_window = Windows(self.tetris_score)
+        #if self.display:  
+        if display: # pragma: no cover
+            self.tetris_window = Windows(self.tetris_score)
 
         # Game board initialization
         self.game_board_matrix = dict()

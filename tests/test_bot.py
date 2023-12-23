@@ -1,5 +1,5 @@
 
-from src.bot import RandomBot, ExpertBot
+from src.bot import RandomBot, ExpertBot, DeepBot
 from src.game import Tetris
 import random
 import numpy as np
@@ -130,8 +130,6 @@ def test_count_hole_number_three():
                                                           tetris_game.game_board_matrix)
 
     assert bot.count_hole_number(matrix_and_tetromino) == 3
-
-
 def test_count_hole_number_zero():
     """
     Count number of hole in game board matrix.
@@ -298,7 +296,6 @@ def test_count_max_height():
     cost = bot.count_max_height(tetris_game.game_board_matrix)
 
     assert cost == 6
-
 def test_is_line_true():
     """
     Test the dection of line
@@ -466,4 +463,204 @@ def test_count_hole_column():
 
     assert cost == 3
 
+# Deep bot 
 
+def test_create_matrix():
+        """
+        Test the function that map dict into np.array
+        """
+        random.seed(19)
+        tetris_game = Tetris(display=False)
+
+        list_of_coordonates = [
+                (19, 0),
+                (19, 1),
+                (19, 2),
+                (19, 3),
+                (19, 4),
+                (19, 5),
+                (19, 6),
+                (19, 7),
+                (19, 8),
+                (19, 9),
+                (18, 9),
+                (18, 8),
+            ]
+        tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[1]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[2]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[3]] = "blue"
+
+        tetris_game.game_board_matrix[list_of_coordonates[4]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[5]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[6]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[7]] = "blue"
+
+        tetris_game.game_board_matrix[list_of_coordonates[8]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[9]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[10]] = "blue"
+        tetris_game.game_board_matrix[list_of_coordonates[11]] = "blue"
+
+        bot = DeepBot(tetris_game, 
+                    'artefacts/trained_model.hdf5',
+                    display=False)
+        
+        matrix = bot.create_matrix(tetris_game.game_board_matrix)
+        
+        final_matrix = np.array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0., 0., 0., 0., 1., 1.],
+                                [1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]])
+
+
+        assert matrix.shape == (1, 20, 10, 1)
+        assert isinstance(matrix, np.ndarray)
+        assert np.array_equal(matrix[0, :, :, 0], final_matrix)
+
+def test_play():
+    """
+    Test the function that move tetromino in function of the game board situation
+    """
+    random.seed(7)
+    tetris_game = Tetris(display=False)
+
+    list_of_coordonates = [
+            (19, 0),
+            (19, 1),
+            (19, 2),
+            (19, 3),
+            (19, 4),
+            (19, 6),
+            (19, 7),
+            (19, 8),
+            (19, 9),
+            (18, 0),
+            (18, 1),
+            (18, 2),
+            (18, 3),
+            (18, 7),
+            (18, 8),
+            (18, 9),
+        ]
+    tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[1]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[2]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[3]] = "blue"
+
+    tetris_game.game_board_matrix[list_of_coordonates[4]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[5]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[6]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[7]] = "blue"
+
+    tetris_game.game_board_matrix[list_of_coordonates[8]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[9]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[10]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[11]] = "blue"
+
+    tetris_game.game_board_matrix[list_of_coordonates[12]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[13]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[14]] = "blue"
+    tetris_game.game_board_matrix[list_of_coordonates[15]] = "blue"
+
+    bot = DeepBot(tetris_game, 
+                   'artefacts/trained_model.hdf5',
+                   display=False)
+    
+    bot.play()
+    
+
+    assert tetris_game.game_board_matrix[(17, 0)] == 'pink'
+    assert tetris_game.game_board_matrix[(17, 1)] == 'pink'
+    assert tetris_game.game_board_matrix[(17, 2)] == 'pink'
+    assert tetris_game.game_board_matrix[(16, 1)] == 'pink'
+
+def test_move_hat_no_rotation():
+    """
+    Count number of hole in game board matrix.
+    In this test there is no hole
+    """
+    random.seed(7)
+    tetris_game = Tetris(display=False)
+
+    bot = DeepBot(tetris_game, 
+                   'artefacts/trained_model.hdf5')
+    
+    bot.move_tetromino(rotation=0, column=3)
+  
+
+    assert tetris_game.game_board_matrix[(19, 3)] == 'pink'
+    assert tetris_game.game_board_matrix[(19, 4)] == 'pink'
+    assert tetris_game.game_board_matrix[(19, 5)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 4)] == 'pink'
+
+def test_move_hat_one_rotation():
+    """
+    Count number of hole in game board matrix.
+    In this test there is no hole
+    """
+    random.seed(7)
+    tetris_game = Tetris(display=False)
+
+    bot = DeepBot(tetris_game, 
+                   'artefacts/trained_model.hdf5')
+    
+    bot.move_tetromino(rotation=1, column=3)
+  
+    assert tetris_game.game_board_matrix[(19, 3)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 3)] == 'pink'
+    assert tetris_game.game_board_matrix[(17, 3)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 4)] == 'pink'
+
+def test_move_hat_two_rotation():
+    """
+    Count number of hole in game board matrix.
+    In this test there is no hole
+    """
+    random.seed(7)
+    tetris_game = Tetris(display=False)
+
+    bot = DeepBot(tetris_game, 
+                   'artefacts/trained_model.hdf5')
+    
+    bot.move_tetromino(rotation=2, column=3)
+  
+
+    assert tetris_game.game_board_matrix[(19, 4)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 3)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 4)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 5)] == 'pink'
+
+def test_move_hat_three_rotation():
+    """
+    Count number of hole in game board matrix.
+    In this test there is no hole
+    """
+    random.seed(7)
+    tetris_game = Tetris(display=False)
+
+    bot = DeepBot(tetris_game, 
+                   'artefacts/trained_model.hdf5')
+    
+    bot.move_tetromino(rotation=3, column=3)
+  
+
+    assert tetris_game.game_board_matrix[(18, 3)] == 'pink'
+    assert tetris_game.game_board_matrix[(19, 4)] == 'pink'
+    assert tetris_game.game_board_matrix[(18, 4)] == 'pink'
+    assert tetris_game.game_board_matrix[(17, 4)] == 'pink'
