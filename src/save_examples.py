@@ -21,6 +21,9 @@ class dataframe_creation():
                                      tetromino, 
                                      game_board_matrix,
                                      is_current=True):
+        """
+        Integrate the tetromino in the game board example 
+        """
 
         match tetromino.tetromino_name:
             case 'long':
@@ -141,6 +144,9 @@ class dataframe_creation():
     def add_row_dataframe_y(self, 
                             current_tetromino:Tetrominoes
                             )->None:
+        """
+        Add a row example in the csv file
+        """
 
         dataframe_path = f'y_{self.training_id}_dataframe.csv'
 
