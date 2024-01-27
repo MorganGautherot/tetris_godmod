@@ -44,6 +44,9 @@ class Tetrominoes:
         self.tetromino_position = (0, 4) if len(self.tetromino_shape) == 2 else (0, 3)
 
     def add_rotation_count(self):
+        """
+        Add a rotation to the rotation count
+        """
         self.rotation = (self.rotation + 1) % 4
 
     def rotate(self, shape: tuple, times: int = 1) -> tuple:
