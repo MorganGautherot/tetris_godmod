@@ -12,9 +12,9 @@ tetris = Tetris(take_picture = False,
                 training_id=3,
                 display=True,
                 seed=1132)
-bot = ExpertBot(tetris)
+#bot = ExpertBot(tetris)
 
-#bot = DeepBot(tetris)
+bot = DeepBot(tetris)
 
 while not(tetris.game_over):
     
