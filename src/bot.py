@@ -4,7 +4,7 @@ import src.config as config
 from src.tetrominoes import Tetrominoes
 import time, random
 import tensorflow as tf
-from src.game import Tetris
+from src.game import Tetris, dataframe_creation
 import pandas as pd
 import time
 
@@ -103,7 +103,7 @@ class ExpertBot():
                 nb_line += 1
 
                 
-        return np.where(nb_line==0, 0, -300 ** nb_line)
+        return np.where(nb_line==0, 0, -50 ** nb_line)
 
     def custom_metric(self, game_matrix:dict)->float:
         """
@@ -137,10 +137,32 @@ class ExpertBot():
 
         return count_hole
 
+    def compute_cost_with_position(self, tetromino, game_board_matrix, recursivity_id):
+
+
+
+
+        matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(tetromino, 
+                                                            game_board_matrix)
+
+        if recursivity_id :
+            first_cost = self.custom_metric(matrix_and_tetromino)
+            recursive_cost = self.move_estimation(self.tetris.next_tetromino,
+                                                       matrix_and_tetromino,
+                                                       recursivity_id=False)
+            position_cost = recursive_cost['cost'].min()*0.5 + first_cost
+        else :
+            position_cost = self.custom_metric(matrix_and_tetromino)
+
+        #self.tetris.tetris_window.redraw(matrix_and_tetromino,
+        #                                 current_tetromino_copy)
+        #time.sleep(0.1)
+
+        return position_cost
+
     def move_estimation(self, 
                         tetromino:Tetrominoes,
                         game_board_matrix:dict,
-                        cost_function:callable,
                         recursivity_id:bool=True)->pd.DataFrame:
         """
         Estimation of the cost for every tetromino move possible
@@ -157,6 +179,7 @@ class ExpertBot():
             possible_rotation = 1
 
         current_tetromino_copy = copy.deepcopy(tetromino)
+        dataframe_position = pd.DataFrame([], columns=('posY', 'posX', 'rotation'))
 
         # Try every rotation
         for rotation in range(0, possible_rotation):
@@ -175,37 +198,45 @@ class ExpertBot():
                                                          current_tetromino_copy.tetromino_shape,
                                                          game_board_matrix):
 
-
                     last_position = self.tetris.last_valid_position(current_tetromino_copy,
                                                                     game_board_matrix)
 
                     current_tetromino_copy.tetromino_position = last_position
 
-                    matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(current_tetromino_copy, 
-                                                                        game_board_matrix)
-                    
-                    if recursivity_id :
-                        first_cost = cost_function(matrix_and_tetromino)
-                        recursive_cost = self.move_estimation(self.tetris.next_tetromino,
-                                                                   matrix_and_tetromino,
-                                                                   self.custom_metric,
-                                                                   recursivity_id=False)
-                        position_cost = recursive_cost['cost'].min()*0.5 + first_cost
-                    else :
-                        position_cost = cost_function(matrix_and_tetromino)
-
-                    #self.tetris.tetris_window.redraw(matrix_and_tetromino,
-                    #                                 current_tetromino_copy)
-                    #time.sleep(0.1)
-   
+                    position_cost = self.compute_cost_with_position(current_tetromino_copy, 
+                                                                    game_board_matrix, 
+                                                                    recursivity_id)
+        
                     new_line = pd.DataFrame([[width, 
-                                              rotation,
-                                              position_cost]], 
+                                            rotation,
+                                            position_cost]], 
                                             columns=('id_column', 
                                                         'id_rotation',
                                                         'cost'))
 
                     move_cost_dataframe = pd.concat([move_cost_dataframe, new_line])
+
+                    is_valid_hidden, hidden_posY, hidden_posX = self.tetris.hidden_position(current_tetromino_copy,
+                                                                                            game_board_matrix)
+                    
+                    if is_valid_hidden:
+
+                        current_tetromino_copy.tetromino_position = (hidden_posY, hidden_posX)
+    
+                        position_cost = self.compute_cost_with_position(current_tetromino_copy, 
+                                                                        game_board_matrix, 
+                                                                        recursivity_id)
+
+                        new_line = pd.DataFrame([[width, 
+                                                  rotation,
+                                                  position_cost]], 
+                                                  columns=('id_column', 
+                                                              'id_rotation',
+                                                              'cost'))
+
+
+
+
 
         return move_cost_dataframe
 
@@ -216,7 +247,6 @@ class ExpertBot():
 
         move_cost_dataframe = self.move_estimation(self.tetris.current_tetromino,
                                                    self.tetris.game_board_matrix,
-                                                    self.custom_metric,
                                                     recursivity_id=True)
 
         minimum_move_cost_dataframe = move_cost_dataframe[move_cost_dataframe['cost']==move_cost_dataframe['cost'].min()]
@@ -232,7 +262,8 @@ class ExpertBot():
 
         self.tetris.hard_drop()
 
-        #time.sleep(0.2)
+        #time.sleep(0.5)
+
 
 class DeepBot():
 
@@ -252,6 +283,7 @@ class DeepBot():
             self.init_complex_model()
         self.model.load_weights(model_path)
         self.tetris = tetris
+        self.data_func = dataframe_creation()
 
     def init_simple_model(self)->None: # pragma: no cover
         """
@@ -259,36 +291,66 @@ class DeepBot():
         the colmun and position of the current tetromino
         """
         inputs = tf.keras.layers.Input(shape=(20, 10, 1))
-        x = tf.keras.layers.Conv2D(8, (3, 3), padding="same", activation='relu')(inputs)
-        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        x = tf.keras.layers.Conv2D(16, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+
+        x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
         x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.AveragePooling2D((2, 2))(x)
+        #x = tf.keras.layers.Dropout(0.1)(x)
         x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.AveragePooling2D((2, 2))(x)
+        #x = tf.keras.layers.Dropout(0.1)(x)
+        x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.AveragePooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        x = tf.keras.layers.Dense(64, activation='relu')(x)
+
+        x = tf.keras.layers.Dense(512, activation='relu')(x)
+
+        x = tf.keras.layers.Dense(256, activation='relu')(x)
+
+        x = tf.keras.layers.Dense(128, activation='relu')(x)
+
         output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
-        self.model = tf.keras.models.Model(inputs=inputs, outputs = output) 
+        self.model = tf.keras.models.Model(inputs=inputs, outputs = output)
+
                 
     def init_complex_model(self)->None: # pragma: no cover
         """
         Initialization of the architecture of the model used to predict 
         the colmun and position of the current tetromino
         """
-        inputs = tf.keras.layers.Input(shape=(20, 10, 1))
+        inputs = tf.keras.layers.Input(shape=(20, 22, 1))
+
         x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
-        x = tf.keras.layers.Conv2D(16, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
+        #x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        #x = tf.keras.layers.Dropout(0.1)(x)
         x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
+        #x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        #x = tf.keras.layers.Dropout(0.1)(x)
         x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
+        #x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
+        #x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Flatten()(x)
-        x = tf.keras.layers.Dense(64, activation='relu')(x)
+
+        x = tf.keras.layers.Dense(512, activation='relu')(x)
+
+        #x = tf.keras.layers.Dense(256, activation='relu')(x)
+
+        x = tf.keras.layers.Dense(128, activation='relu')(x)
+
         output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
-        self.model = tf.keras.models.Model(inputs=inputs, outputs = output) 
+        self.model = tf.keras.models.Model(inputs=inputs, outputs = output)
+
                 
 
     def create_matrix(self, matrix_and_tetromino:dict)->np.ndarray:
@@ -326,25 +388,39 @@ class DeepBot():
         the board game using deep learning model
         """
 
-        matrix_and_tetromino = self.tetris.add_tetromino_to_game_board_matrix(self.tetris.current_tetromino, 
-                                                            self.tetris.game_board_matrix)
-        
-        input_image = self.create_matrix(matrix_and_tetromino)
-        
 
-        print(input_image[0, :, :, 0])
+        image_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH+12))
 
-        prediction = self.model.predict(input_image)
+        for key, values in self.tetris.game_board_matrix.items():
+            y, x = key
+            if not(values is None):
+                image_matrix[y, x+6] = 255
+
+        image_matrix = self.data_func.integrate_tetromino_in_board(self.tetris.current_tetromino,
+                                                 image_matrix,
+                                                 is_current=True) 
+
+        image_matrix = self.data_func.integrate_tetromino_in_board(self.tetris.next_tetromino,
+                                                         image_matrix,
+                                                         is_current=False) 
+        
+        image_matrix = np.expand_dims(image_matrix, axis=-1)
+        input_image = np.expand_dims(image_matrix, axis=0)/255
+        
+        #print(input_image[0, :, :, 0])
+
+        prediction = self.model.predict(input_image, verbose=0)
 
         column = np.argmax(prediction)%10
         rotation = int(np.floor(np.argmax(prediction)/10))
 
-        print('-----')
-        print(np.argmax(prediction))
-        print(f'rotation : {rotation}')
-        print(f'column : {column}')      
+        #print('-----')
+        #print(np.argmax(prediction))
+        #print(f'rotation : {rotation}')
+        #print(f'column : {column}')      
 
         self.move_tetromino(rotation, column)
+
 
     def move_tetromino(self, rotation, column):
 

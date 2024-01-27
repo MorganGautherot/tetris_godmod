@@ -1,5 +1,5 @@
 from src.game import Tetris
-from src.bot import deep_bot, ExpertBot
+from src.bot import ExpertBot
 
 
 
@@ -7,14 +7,14 @@ from src.bot import deep_bot, ExpertBot
 
 display = False
 
-for i in range(10000, 20000):
+for i in range(1, 2500):
     tetris = Tetris(take_picture = True, 
                     training_id=i,
                     display=display)
     bot = ExpertBot(tetris)
     cmpt = 0
     tmp_score = 0
-    while not(tetris.game_over) and cmpt < 1:
+    while not(tetris.game_over) :
 
         # Time of the game
         #tetris.tetromino_falls_over_time()
@@ -26,7 +26,7 @@ for i in range(10000, 20000):
                                         tetris.next_tetromino)
 
         #random_bot(tetris)
-        tetris.user_action()
+        #tetris.user_action()
         bot.play()
         #bot.play(tetris)
         #print(count_hole_number(tetris.matrix))

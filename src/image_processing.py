@@ -5,10 +5,10 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
-data_folder_name = "beginning_game"
+data_folder_name = "pro"
 split_test = 'test'
 
-PATH_DATA = "\\Users\Gautherot\Documents\code\code_videos\Tetris_godmod\jeu_de_donnees\\"
+PATH_DATA = "\\Users\Gautherot\Documents\code\code_videos\Tetris_godmod\jeu_de_donnees\with_next\\"
 
 dataframe = pd.DataFrame([], columns=('name', 'path', 'column', 'rotation'))
 
@@ -23,7 +23,7 @@ for folder in glob(f'{PATH_DATA}{data_folder_name}\\{split_test}\\*'):
     data = pd.read_csv(f'{PATH_DATA}{data_folder_name}\\{split_test}\\y_{folder_id}_dataframe.csv')
 
     for line in data.iterrows():
-
+  
         new_path = f'{folder}/'+line[1]['path'].split('/')[-1]
 
         new_row = pd.DataFrame([[line[1]['name'],
@@ -45,7 +45,7 @@ for line in tqdm(dataframe.iterrows()):
 dataframe.to_csv(f'{PATH_DATA}{split_test}_data-{data_folder_name}.csv', index=False)
 
 
-dataframe_images = np.zeros((dataframe.shape[0], 20, 10, 1))
+dataframe_images = np.zeros((dataframe.shape[0], 20, 22, 1))
 
 for image_path in tqdm(dataframe.iterrows()):
 

@@ -117,7 +117,7 @@ class Windows():  # pragma: no cover
                 boxarr[x][y] = tuple(
                     list(
                         map(
-                            lambda c: min(255, int(c * random.uniform(0.8, 1.2))),
+                            lambda c: min(255, int(c * 1)),
                             colors[color],
                         )
                     )

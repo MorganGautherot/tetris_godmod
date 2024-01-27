@@ -14,7 +14,14 @@ class Score:
 
         self.lines += lines_cleared
 
-        self.score += 100 * (lines_cleared**2) * self.combo
+        if lines_cleared == 1:
+            self.score += 40 * self.level
+        if lines_cleared == 2:
+            self.score += 100 * self.level
+        if lines_cleared == 3:
+            self.score += 300 * self.level
+        if lines_cleared == 4:
+            self.score += 1200 * self.level
 
         if self.lines >= self.level * 10:
             self.level += 1

@@ -5,13 +5,19 @@ import src.config as config
 from src.save_examples import dataframe_creation
 import pygame
 import pandas as pd
+import numpy as np
+import copy
+import random
+import os
 
 
 class Tetris:
-    def __init__(self, take_picture: bool = False, display: bool = True, training_id:int=0) -> None:
+    def __init__(self, take_picture: bool = False, display: bool = True, training_id:int=0, seed:int=None) -> None:
         """
         Initialization of the game
         """
+
+        random.seed(seed)     
 
         self.game_over = False
 
@@ -43,13 +49,10 @@ class Tetris:
             # Initialization of the object to map game board into image
             self.data_creation = dataframe_creation(training_id)
 
-            matrix_and_tetromino = self.add_tetromino_to_game_board_matrix(
-                self.current_tetromino, self.game_board_matrix
-            )
 
-            self.data_creation.game_board_to_image(
-                matrix_and_tetromino, self.current_tetromino
-            )
+
+            self.data_creation.game_board_to_image(self)
+
 
         # Initialization of the time game
         self.clock = pygame.time.Clock()
@@ -267,14 +270,125 @@ class Tetris:
         new_posY -= 1
         return (new_posY, posX)
 
+    def is_hidden_position(
+        self, tetromino: Tetrominoes, game_board_matrix: dict
+    ) -> bool:
+        """
+        Return if there is a hidden position at the current column position
+        """
+        hidden = False
+        posY, posX = self.last_valid_position(tetromino, game_board_matrix)
+        shape = tetromino.tetromino_shape
+        new_posY = posY + 1
+        while new_posY <= 20: 
+            if self.fits_in_game_board_matrix(
+            (new_posY, posX), shape, game_board_matrix
+        ):
+                hidden = True
+
+            elif not(self.fits_in_game_board_matrix(
+            (new_posY, posX), shape, game_board_matrix
+        )) and hidden:
+                
+                new_posY -= 1
+                break
+            new_posY += 1
+
+        return hidden, new_posY, posX
+    
+    def is_valid_hidden_position(self, 
+                                 tetromino, 
+                                 game_board_matrix, 
+                                 valid_matrix):
+        
+        posY, posX = tetromino.tetromino_position
+        shape = tetromino.tetromino_shape
+
+        position_seen = [(posY, posX)]
+        position_to_see = [(posY, posX-1), (posY, posX+1), (posY-1, posX)]
+
+        valid_hidden_position = False
+        number_of_valid_pixel = np.sum(valid_matrix)
+
+        while len(position_to_see) > 0:
+
+            next_posY, newt_posX = position_to_see[0]
+            position_seen.append(position_to_see[0])
+            position_to_see.remove(position_to_see[0])
+
+            if self.fits_in_game_board_matrix(
+                (next_posY, newt_posX), shape, game_board_matrix):
+
+                if  not((next_posY, newt_posX-1) in position_seen):
+                    position_to_see.append((next_posY, newt_posX-1))
+                if  not((next_posY, newt_posX+1) in position_seen):
+                    position_to_see.append((next_posY, newt_posX+1))
+                if  not((next_posY-1, newt_posX) in position_seen):
+                    position_to_see.append((next_posY-1, newt_posX))
+                if  not((next_posY+1, newt_posX) in position_seen):
+                    position_to_see.append((next_posY+1, newt_posX))
+        
+
+                valid_matrix_copy = copy.deepcopy(valid_matrix)
+                    
+                for x in range(newt_posX, newt_posX + len(shape)):
+                    for y in range(next_posY, next_posY + len(shape)):
+                        if shape[y - next_posY][x - newt_posX]:
+                            valid_matrix_copy[(y, x)] = 1
+                
+                if number_of_valid_pixel == np.sum(valid_matrix_copy):
+                    valid_hidden_position = True
+                    break
+                
+        return valid_hidden_position
+    
+    def hidden_position(self, tetromino, game_board_matrix):
+
+        valid_matrix = self.valid_area(game_board_matrix)
+
+        is_hidden, new_posY, posX = self.is_hidden_position(tetromino, game_board_matrix)
+
+        if is_hidden :
+
+            current_tetromino_copy = copy.deepcopy(tetromino)
+            current_tetromino_copy.tetromino_position = (new_posY, posX)
+
+            is_valid_hidden = self.is_valid_hidden_position(current_tetromino_copy,
+                                                            game_board_matrix,
+                                                            valid_matrix)
+
+
+            if is_valid_hidden:
+                return is_valid_hidden, new_posY, posX
+        return False, new_posY, posX
+
+     
+    
+    
+    def valid_area(
+        self, game_board_matrix: dict
+    ) -> bool:
+        valid_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH))
+        for column in range(0, config.MATRIX_WIDTH):
+            not_tetromino_yet = True
+            for line in range(0, config.MATRIX_HEIGHT):
+                if not(game_board_matrix[line, column]) and not_tetromino_yet:
+                    valid_matrix[line, column] = 1
+                elif game_board_matrix[line, column]:
+                    not_tetromino_yet = False
+                    
+        return valid_matrix
+
+
     def hard_drop(self) -> None:
         """
         Put the tetromino at the lowest possible position
         """
-        _, posX = self.current_tetromino.tetromino_position
+        posY, posX = self.current_tetromino.tetromino_position
         (new_posY, posX) = self.last_valid_position(
             self.current_tetromino, self.game_board_matrix
         )
+        self.tetris_score.score += 10* (new_posY-posY)
         self.current_tetromino.tetromino_position = (new_posY, posX)
         self.fall_down()
 
@@ -315,9 +429,7 @@ class Tetris:
             if self.display:
                 self.tetris_window.redraw(matrix_and_tetromino, self.next_tetromino)
 
-            self.data_creation.game_board_to_image(
-                matrix_and_tetromino, self.current_tetromino
-            )
+            self.data_creation.game_board_to_image(self)
 
         # game over
         if not (

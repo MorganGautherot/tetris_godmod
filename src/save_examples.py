@@ -17,9 +17,93 @@ class dataframe_creation():
         )
         y_dataframe.to_csv(f'y_{self.training_id}_dataframe.csv', index=False)
 
+    def integrate_tetromino_in_board(self, 
+                                     tetromino, 
+                                     game_board_matrix,
+                                     is_current=True):
+
+        match tetromino.tetromino_name:
+            case 'long':
+                if is_current:
+                    game_board_matrix[0, 0] = 255
+                    game_board_matrix[0, 1] = 255
+                    game_board_matrix[0, 2] = 255
+                    game_board_matrix[0, 3] = 255
+                else:
+                    game_board_matrix[0, -1] = 255
+                    game_board_matrix[0, -2] = 255
+                    game_board_matrix[0, -3] = 255
+                    game_board_matrix[0, -4] = 255                   
+            case 'right_gun':
+                if is_current:
+                    game_board_matrix[4, 0] = 255
+                    game_board_matrix[4, 1] = 255
+                    game_board_matrix[4, 2] = 255
+                    game_board_matrix[3, 2] = 255
+                else:
+                    game_board_matrix[4, -1] = 255
+                    game_board_matrix[4, -2] = 255
+                    game_board_matrix[4, -3] = 255
+                    game_board_matrix[3, -1] = 255                    
+            case 'square':
+                if is_current:
+                    game_board_matrix[6, 0] = 255
+                    game_board_matrix[6, 1] = 255
+                    game_board_matrix[7, 0] = 255
+                    game_board_matrix[7, 1] = 255
+                else:
+                    game_board_matrix[6, -1] = 255
+                    game_board_matrix[6, -2] = 255
+                    game_board_matrix[7, -1] = 255
+                    game_board_matrix[7, -2] = 255
+            case 'left_gun':
+                if is_current:
+                    game_board_matrix[10, 0] = 255
+                    game_board_matrix[10, 1] = 255
+                    game_board_matrix[10, 2] = 255
+                    game_board_matrix[9, 0] = 255
+                else:
+                    game_board_matrix[10, -1] = 255
+                    game_board_matrix[10, -2] = 255
+                    game_board_matrix[10, -3] = 255
+                    game_board_matrix[9, -3] = 255
+            case 'left_snake':
+                if is_current:
+                    game_board_matrix[12, 0] = 255
+                    game_board_matrix[12, 1] = 255
+                    game_board_matrix[13, 1] = 255
+                    game_board_matrix[13, 2] = 255   
+                else:
+                    game_board_matrix[12, -3] = 255
+                    game_board_matrix[12, -2] = 255
+                    game_board_matrix[13, -2] = 255
+                    game_board_matrix[13, -1] = 255
+            case 'hat':
+                if is_current:
+                    game_board_matrix[15, 0] = 255
+                    game_board_matrix[15, 1] = 255
+                    game_board_matrix[15, 2] = 255
+                    game_board_matrix[14, 1] = 255   
+                else:
+                    game_board_matrix[15, -1] = 255
+                    game_board_matrix[15, -2] = 255
+                    game_board_matrix[15, -3] = 255
+                    game_board_matrix[14, -2] = 255  
+            case 'right_snake':
+                if is_current:
+                    game_board_matrix[19, 0] = 255
+                    game_board_matrix[19, 1] = 255
+                    game_board_matrix[18, 1] = 255
+                    game_board_matrix[18, 2] = 255
+                else :
+                    game_board_matrix[18, -1] = 255
+                    game_board_matrix[18, -2] = 255
+                    game_board_matrix[19, -2] = 255
+                    game_board_matrix[19, -3] = 255
+        return game_board_matrix
+
     def game_board_to_image(self, 
-                            matrix_and_tetromino:dict, 
-                            current_tetromino:Tetrominoes
+                            tetris
                             )->None:
         """
         Transform the game board matrix into an image
@@ -32,15 +116,24 @@ class dataframe_creation():
             os.mkdir(saving_path)
             
 
-        image_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH))
+        image_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH+12))
 
-        for key, values in matrix_and_tetromino.items():
-
+        for key, values in tetris.game_board_matrix.items():
+            y, x = key
             if not(values is None):
-                image_matrix[key] = 255
+                image_matrix[y, x+6] = 255
 
-        self.tetromino_name = current_tetromino.tetromino_name.replace('_', '-') 
+        image_matrix = self.integrate_tetromino_in_board(tetris.current_tetromino,
+                                                         image_matrix,
+                                                         True) 
+
+        image_matrix = self.integrate_tetromino_in_board(tetris.next_tetromino,
+                                                         image_matrix,
+                                                         False) 
+
+        self.tetromino_name = tetris.current_tetromino.tetromino_name.replace('_', '-') 
         self.path = f'{saving_path}/{self.number_screenshot}_{self.tetromino_name}.png'
+
         cv2.imwrite(self.path, image_matrix[:, :])
 
         self.number_screenshot += 1
