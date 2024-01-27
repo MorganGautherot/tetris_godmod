@@ -271,7 +271,7 @@ class DeepBot():
                  tetris:Tetris,
                  model_path:str ='artefacts/trained_model.hdf5',
                  model_architecture:str='complex_model',
-                 display:bool=False)->None: # pragma: no cover
+                 display:bool=False)->None: 
         """
         Initialize the bot using deep learning
         """
@@ -284,74 +284,27 @@ class DeepBot():
         self.model.load_weights(model_path)
         self.tetris = tetris
         self.data_func = dataframe_creation()
-
-    def init_simple_model(self)->None: # pragma: no cover
-        """
-        Initialization of the architecture of the model used to predict 
-        the colmun and position of the current tetromino
-        """
-        inputs = tf.keras.layers.Input(shape=(20, 10, 1))
-
-        x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
-        x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.AveragePooling2D((2, 2))(x)
-        #x = tf.keras.layers.Dropout(0.1)(x)
-        x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.AveragePooling2D((2, 2))(x)
-        #x = tf.keras.layers.Dropout(0.1)(x)
-        x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.AveragePooling2D((2, 2))(x)
-        x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
-        x = tf.keras.layers.Flatten()(x)
-
-        x = tf.keras.layers.Dense(512, activation='relu')(x)
-
-        x = tf.keras.layers.Dense(256, activation='relu')(x)
-
-        x = tf.keras.layers.Dense(128, activation='relu')(x)
-
-        output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
-        self.model = tf.keras.models.Model(inputs=inputs, outputs = output)
-
                 
-    def init_complex_model(self)->None: # pragma: no cover
+    def init_complex_model(self)->None: 
         """
         Initialization of the architecture of the model used to predict 
         the colmun and position of the current tetromino
         """
         inputs = tf.keras.layers.Input(shape=(20, 22, 1))
-
         x = tf.keras.layers.ZeroPadding2D(padding=(2, 2))(inputs)
         x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
-        #x = tf.keras.layers.Conv2D(32, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        #x = tf.keras.layers.Dropout(0.1)(x)
         x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
-        #x = tf.keras.layers.Conv2D(64, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        #x = tf.keras.layers.Dropout(0.1)(x)
         x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
-        #x = tf.keras.layers.Conv2D(128, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
-        #x = tf.keras.layers.Conv2D(256, (3, 3), padding="same", activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Flatten()(x)
-
         x = tf.keras.layers.Dense(512, activation='relu')(x)
-
-        #x = tf.keras.layers.Dense(256, activation='relu')(x)
-
         x = tf.keras.layers.Dense(128, activation='relu')(x)
-
         output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
         self.model = tf.keras.models.Model(inputs=inputs, outputs = output)
-
-                
 
     def create_matrix(self, matrix_and_tetromino:dict)->np.ndarray:
         """ 
@@ -368,19 +321,6 @@ class DeepBot():
         maitrix_shaped = np.expand_dims(maitrix_shaped, axis=0)
 
         return maitrix_shaped
-
-    def no_whole(self, game_matrix):
-
-      gamme_matrix_without_current_tetromino = game_matrix.copy()
-
-      width, colmun, _ = gamme_matrix_without_current_tetromino.shape
-
-      for col in np.arange(colmun):
-        first_tetromino = np.argmax(gamme_matrix_without_current_tetromino[2:, col, :])
-
-        gamme_matrix_without_current_tetromino[first_tetromino:, col, :]=1
-
-      return gamme_matrix_without_current_tetromino
 
     def play(self)->None:
         """
@@ -406,23 +346,24 @@ class DeepBot():
         
         image_matrix = np.expand_dims(image_matrix, axis=-1)
         input_image = np.expand_dims(image_matrix, axis=0)/255
-        
-        #print(input_image[0, :, :, 0])
 
         prediction = self.model.predict(input_image, verbose=0)
 
         column = np.argmax(prediction)%10
-        rotation = int(np.floor(np.argmax(prediction)/10))
-
-        #print('-----')
-        #print(np.argmax(prediction))
-        #print(f'rotation : {rotation}')
-        #print(f'column : {column}')      
+        rotation = int(np.floor(np.argmax(prediction)/10))   
 
         self.move_tetromino(rotation, column)
 
 
-    def move_tetromino(self, rotation, column):
+    def move_tetromino(self, rotation:int, column:int)->None:
+        """
+        Move the tetromino in order go be rotate it and move it to the right column
+
+        Args: 
+            - rotation(int): number time the tetromino has to be rotated
+            - column(int): where the tetromino have to be placed
+        
+        """
 
         (posY, posX) = self.tetris.current_tetromino.tetromino_position
 
