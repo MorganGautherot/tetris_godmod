@@ -297,9 +297,13 @@ class Tetris:
         return hidden, new_posY, posX
     
     def is_valid_hidden_position(self, 
-                                 tetromino, 
-                                 game_board_matrix, 
-                                 valid_matrix):
+                                 tetromino: Tetrominoes, 
+                                 game_board_matrix:dict, 
+                                 valid_matrix:np.ndarray)->bool:
+        
+        """
+        Check if the hidden positon is valid
+        """
         
         posY, posX = tetromino.tetromino_position
         shape = tetromino.tetromino_shape
@@ -342,7 +346,10 @@ class Tetris:
                 
         return valid_hidden_position
     
-    def hidden_position(self, tetromino, game_board_matrix):
+    def hidden_position(self, tetromino:Tetrominoes, game_board_matrix:dict)->tuple:
+        '''
+        Return the valid hidden position if there is one
+        '''
 
         valid_matrix = self.valid_area(game_board_matrix)
 
@@ -368,6 +375,9 @@ class Tetris:
     def valid_area(
         self, game_board_matrix: dict
     ) -> bool:
+        """
+        Determine the valid area in the game_board_matrix
+        """
         valid_matrix = np.zeros((config.MATRIX_HEIGHT, config.MATRIX_WIDTH))
         for column in range(0, config.MATRIX_WIDTH):
             not_tetromino_yet = True
