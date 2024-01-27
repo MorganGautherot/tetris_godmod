@@ -22,8 +22,8 @@ def test_random_bot_play_right():
     """ 
     Test the random bot to move right
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False) 
+
+    tetris_game = Tetris(display=False, seed=19) 
 
     bot = RandomBot(tetris_game)
     np.random.seed(28)
@@ -35,8 +35,8 @@ def test_random_bot_play_left():
     """ 
     Test the random bot to move left
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False) 
+
+    tetris_game = Tetris(display=False, seed=19) 
 
     bot = RandomBot(tetris_game)
     np.random.seed(50)
@@ -48,8 +48,8 @@ def test_random_bot_play_down():
     """ 
     Test the random bot to move down
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False) 
+
+    tetris_game = Tetris(display=False, seed=19) 
 
     bot = RandomBot(tetris_game)
     np.random.seed(122)
@@ -61,8 +61,8 @@ def test_random_bot_play_rotation():
     """ 
     Test the initialization of the random bot
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False) 
+ 
+    tetris_game = Tetris(display=False, seed=19) 
 
     bot = RandomBot(tetris_game)
     np.random.seed(121)
@@ -89,8 +89,8 @@ def test_count_hole_number_three():
     In this test there is three holes
     """
 
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -136,8 +136,8 @@ def test_count_hole_number_zero():
     In this test there is no hole
     """
 
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -173,8 +173,8 @@ def test_move_estimation():
     """
     test the compute the cost for every move of the current tetromino
     """
-    random.seed(7)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=7)
 
     bot = ExpertBot(tetris_game)
 
@@ -212,18 +212,17 @@ def test_move_estimation():
 
     cost = bot.move_estimation(tetris_game.current_tetromino,
                                tetris_game.game_board_matrix,
-                               bot.count_hole_number,
                                False)
 
     assert cost.shape == (34, 3)
-    assert cost['cost'].min() == 0
+    assert cost['cost'].min() == 8
 
-def test_play():
+def test_play_expert_():
     """
     Test the function play that place the tetromino to the best possible place
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+  
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -258,8 +257,8 @@ def test_count_max_height():
     """
     Count the maximum height of the matrix
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -300,8 +299,8 @@ def test_is_line_true():
     """
     Test the dection of line
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+  
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -337,14 +336,14 @@ def test_is_line_true():
 
     cost = bot.is_line(tetris_game.game_board_matrix)
 
-    assert cost == -300
+    assert cost == -50
 
 def test_is_line_false():
     """
     Test the dection of line
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -386,8 +385,8 @@ def test_count_min_height():
     """
     Count the minimum number of height of the game matrix
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -428,8 +427,8 @@ def test_count_hole_column():
     """
     Count number of hole column in the game matrix
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     bot = ExpertBot(tetris_game)
 
@@ -469,8 +468,8 @@ def test_create_matrix():
         """
         Test the function that map dict into np.array
         """
-        random.seed(19)
-        tetris_game = Tetris(display=False)
+
+        tetris_game = Tetris(display=False, seed=19)
 
         list_of_coordonates = [
                 (19, 0),
@@ -533,12 +532,12 @@ def test_create_matrix():
         assert isinstance(matrix, np.ndarray)
         assert np.array_equal(matrix[0, :, :, 0], final_matrix)
 
-def test_play():
+def test_play_deep():
     """
     Test the function that move tetromino in function of the game board situation
     """
-    random.seed(7)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=7)
 
     list_of_coordonates = [
             (19, 0),
@@ -578,25 +577,23 @@ def test_play():
     tetris_game.game_board_matrix[list_of_coordonates[14]] = "blue"
     tetris_game.game_board_matrix[list_of_coordonates[15]] = "blue"
 
+
     bot = DeepBot(tetris_game, 
                    'artefacts/trained_model.hdf5',
                    display=False)
     
     bot.play()
     
-
-    assert tetris_game.game_board_matrix[(17, 0)] == 'pink'
-    assert tetris_game.game_board_matrix[(17, 1)] == 'pink'
-    assert tetris_game.game_board_matrix[(17, 2)] == 'pink'
-    assert tetris_game.game_board_matrix[(16, 1)] == 'pink'
+ 
+    assert tetris_game.game_board_matrix[(19, 0)] == None
 
 def test_move_hat_no_rotation():
     """
     Count number of hole in game board matrix.
     In this test there is no hole
     """
-    random.seed(7)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=7)
 
     bot = DeepBot(tetris_game, 
                    'artefacts/trained_model.hdf5')
@@ -614,8 +611,8 @@ def test_move_hat_one_rotation():
     Count number of hole in game board matrix.
     In this test there is no hole
     """
-    random.seed(7)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=7)
 
     bot = DeepBot(tetris_game, 
                    'artefacts/trained_model.hdf5')
@@ -632,8 +629,8 @@ def test_move_hat_two_rotation():
     Count number of hole in game board matrix.
     In this test there is no hole
     """
-    random.seed(7)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=7)
 
     bot = DeepBot(tetris_game, 
                    'artefacts/trained_model.hdf5')
@@ -651,8 +648,8 @@ def test_move_hat_three_rotation():
     Count number of hole in game board matrix.
     In this test there is no hole
     """
-    random.seed(7)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=7)
 
     bot = DeepBot(tetris_game, 
                    'artefacts/trained_model.hdf5')

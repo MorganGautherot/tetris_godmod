@@ -21,8 +21,8 @@ def test_not_falling_tetromino_falls_over_time():
     """
     Test the falling of the tetromino
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
     old_position = tetris_game.current_tetromino.tetromino_position
     time.sleep(0.1)
     tetris_game.tetromino_falls_over_time()
@@ -34,8 +34,8 @@ def test_falling_tetromino_falls_over_time():
     """
     Test the falling of the tetromino
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
     time.sleep(1)
     tetris_game.tetromino_falls_over_time()
 
@@ -112,7 +112,7 @@ def test_fits_in_game_board_matrix_false():
     Test when a tetromino do not fit in the board game matrix
     """
 
-    tetris_game = Tetris(display=False)
+    tetris_game = Tetris(display=False, seed=12)
 
     list_of_coordonates = [
         (16, 0),
@@ -157,7 +157,7 @@ def test_fits_in_game_board_matrix_false():
     tetris_game.game_board_matrix[list_of_coordonates[14]] = "yellow"
     tetris_game.game_board_matrix[list_of_coordonates[15]] = "yellow"
 
-    random.seed(12)
+
     tetromino = Tetrominoes()
 
     new_tetromino_position = (19, 0)
@@ -176,7 +176,7 @@ def test_fits_in_game_board_matrix_True():
     Test when a tetromino fit in the board game matrix
     """
 
-    tetris_game = Tetris(display=False)
+    tetris_game = Tetris(display=False, seed=12)
 
     list_of_coordonates = [
         (16, 0),
@@ -221,7 +221,7 @@ def test_fits_in_game_board_matrix_True():
     tetris_game.game_board_matrix[list_of_coordonates[14]] = "yellow"
     tetris_game.game_board_matrix[list_of_coordonates[15]] = "yellow"
 
-    random.seed(12)
+
     tetromino = Tetrominoes()
 
     new_tetromino_position = (0, 5)
@@ -239,8 +239,8 @@ def test_rotation_without_move():
     """
     Test when a rotation is possible without moving
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     list_of_coordonates = [
         (16, 0),
@@ -295,8 +295,8 @@ def test_rotation_with_one_move_left():
     """
     Test when a rotation is possible with one move left
     """
-    random.seed(111)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=111)
 
     list_of_coordonates = [
         (16, 6),
@@ -334,8 +334,8 @@ def test_rotation_with_one_move_right():
     """
     Test when a rotation is possible with one move right
     """
-    random.seed(111)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=111)
 
     list_of_coordonates = [
         (16, 4),
@@ -373,8 +373,8 @@ def test_rotation_with_two_move_right():
     """
     Test when a rotation is possible with two move right
     """
-    random.seed(123)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=123)
 
     list_of_coordonates = [
         (16, 4),
@@ -412,8 +412,8 @@ def test_rotation_with_two_move_left():
     """
     Test when a rotation is possible with two move left
     """
-    random.seed(123)
-    tetris_game = Tetris(display=False)
+  
+    tetris_game = Tetris(display=False, seed=123)
 
     list_of_coordonates = [
         (16, 6),
@@ -451,8 +451,8 @@ def test_rotation_with_one_move_up():
     """
     Test when a rotation is possible with one move left
     """
-    random.seed(123)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=123)
 
     list_of_coordonates = [
         (16, 6),
@@ -490,8 +490,8 @@ def test_rotation_with_one_move_up_one_move_right():
     """
     Test when a rotation is possible with one move up one move right
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     list_of_coordonates = [
         (16, 6),
@@ -545,8 +545,8 @@ def test_rotation_with_two_move_up():
     """
     Test when a rotation is possible with two move up
     """
-    random.seed(12)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=12)
 
     list_of_coordonates = [
         (16, 6),
@@ -602,8 +602,8 @@ def test_rotation_with_one_move_up_one_move_left():
     """
     Test when a rotation is possible with one move up one move left
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (16, 6),
@@ -659,8 +659,8 @@ def test_move_left_not_possible():
     """
     Test when a move left is not possible
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (16, 4),
@@ -692,8 +692,8 @@ def test_move_left_possible():
     """
     Test when a move left is not possible
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (16, 4),
@@ -725,8 +725,8 @@ def test_move_right_not_possible():
     """
     Test when a move right is possible
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (16, 6),
@@ -758,8 +758,8 @@ def test_move_right_possible():
     """
     Test when a move right is possible
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+ 
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (16, 6),
@@ -791,8 +791,8 @@ def test_move_down_possible():
     """
     Test when a move down is possible
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(16, 4), (17, 4), (18, 4), (19, 4)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -811,8 +811,8 @@ def test_move_down_not_possible():
     """
     Test when a move down is possible
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(16, 4), (17, 4), (18, 4), (19, 4)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -831,8 +831,8 @@ def test_fall_down_no_lines_cleared():
     """
     Test when a fall down without line clear
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(16, 4), (17, 4), (18, 4), (19, 4)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -853,8 +853,8 @@ def test_fall_down_lines_cleared():
     """
     Test when a fall down with line clear
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (19, 0),
@@ -894,8 +894,8 @@ def test_last_valid_position():
     """
     Test last valid position for a tetromino
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+  
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(19, 0), (19, 1), (19, 2), (19, 3)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -916,8 +916,8 @@ def test_hard_drop():
     """
     Test hard_drop
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(19, 0), (19, 1), (19, 2), (19, 3)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -941,8 +941,8 @@ def test_lock_tetromino():
     """
     Test the function to lock a tetromino to the board
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(19, 0), (19, 1), (19, 2), (19, 3)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -966,8 +966,8 @@ def test_set_tetrominoes():
     """
     Test set a new tetromino
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [(19, 0), (19, 1), (19, 2), (19, 3)]
     tetris_game.game_board_matrix[list_of_coordonates[0]] = "blue"
@@ -987,8 +987,8 @@ def test_remove_lines():
     """
     Test remove lines
     """
-    random.seed(19)
-    tetris_game = Tetris(display=False)
+
+    tetris_game = Tetris(display=False, seed=19)
 
     list_of_coordonates = [
         (19, 0),

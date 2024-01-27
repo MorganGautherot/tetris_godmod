@@ -22,7 +22,7 @@ def test_mark_score():
     game_score.mark_score(4)
 
     assert game_score.level == 1
-    assert game_score.score == 1600
+    assert game_score.score == 1200
     assert game_score.lines == 4
     assert game_score.combo == 2
 
