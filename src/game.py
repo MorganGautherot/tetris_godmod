@@ -280,7 +280,7 @@ class Tetris:
         posY, posX = self.last_valid_position(tetromino, game_board_matrix)
         shape = tetromino.tetromino_shape
         new_posY = posY + 1
-        while new_posY <= 20: 
+        while new_posY <= config.MATRIX_HEIGHT:
             if self.fits_in_game_board_matrix(
             (new_posY, posX), shape, game_board_matrix
         ):
@@ -316,28 +316,28 @@ class Tetris:
 
         while len(position_to_see) > 0:
 
-            next_posY, newt_posX = position_to_see[0]
+            next_posY, next_posX = position_to_see[0]
             position_seen.append(position_to_see[0])
             position_to_see.remove(position_to_see[0])
 
             if self.fits_in_game_board_matrix(
-                (next_posY, newt_posX), shape, game_board_matrix):
+                (next_posY, next_posX), shape, game_board_matrix):
 
-                if  not((next_posY, newt_posX-1) in position_seen):
-                    position_to_see.append((next_posY, newt_posX-1))
-                if  not((next_posY, newt_posX+1) in position_seen):
-                    position_to_see.append((next_posY, newt_posX+1))
-                if  not((next_posY-1, newt_posX) in position_seen):
-                    position_to_see.append((next_posY-1, newt_posX))
-                if  not((next_posY+1, newt_posX) in position_seen):
-                    position_to_see.append((next_posY+1, newt_posX))
-        
+                if  not((next_posY, next_posX-1) in position_seen):
+                    position_to_see.append((next_posY, next_posX-1))
+                if  not((next_posY, next_posX+1) in position_seen):
+                    position_to_see.append((next_posY, next_posX+1))
+                if  not((next_posY-1, next_posX) in position_seen):
+                    position_to_see.append((next_posY-1, next_posX))
+                if  not((next_posY+1, next_posX) in position_seen):
+                    position_to_see.append((next_posY+1, next_posX))
+
 
                 valid_matrix_copy = copy.deepcopy(valid_matrix)
-                    
-                for x in range(newt_posX, newt_posX + len(shape)):
+
+                for x in range(next_posX, next_posX + len(shape)):
                     for y in range(next_posY, next_posY + len(shape)):
-                        if shape[y - next_posY][x - newt_posX]:
+                        if shape[y - next_posY][x - next_posX]:
                             valid_matrix_copy[(y, x)] = 1
                 
                 if number_of_valid_pixel == np.sum(valid_matrix_copy):

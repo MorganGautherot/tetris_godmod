@@ -227,15 +227,14 @@ class ExpertBot():
                                                                         game_board_matrix, 
                                                                         recursivity_id)
 
-                        new_line = pd.DataFrame([[width, 
+                        new_line = pd.DataFrame([[width,
                                                   rotation,
-                                                  position_cost]], 
-                                                  columns=('id_column', 
+                                                  position_cost]],
+                                                  columns=('id_column',
                                                               'id_rotation',
                                                               'cost'))
 
-
-
+                        move_cost_dataframe = pd.concat([move_cost_dataframe, new_line])
 
 
         return move_cost_dataframe
@@ -303,7 +302,7 @@ class DeepBot():
         x = tf.keras.layers.Flatten()(x)
         x = tf.keras.layers.Dense(512, activation='relu')(x)
         x = tf.keras.layers.Dense(128, activation='relu')(x)
-        output = tf.keras.layers.Dense(units = '40', activation = 'softmax')(x)
+        output = tf.keras.layers.Dense(units=40, activation='softmax')(x)
         self.model = tf.keras.models.Model(inputs=inputs, outputs = output)
 
     def create_matrix(self, matrix_and_tetromino:dict)->np.ndarray:
@@ -317,10 +316,10 @@ class DeepBot():
                 if not(matrix_and_tetromino[i, j] is None):
                     matrix[i, j]=1
         
-        maitrix_shaped = np.expand_dims(matrix, axis=-1)
-        maitrix_shaped = np.expand_dims(maitrix_shaped, axis=0)
+        matrix_shaped = np.expand_dims(matrix, axis=-1)
+        matrix_shaped = np.expand_dims(matrix_shaped, axis=0)
 
-        return maitrix_shaped
+        return matrix_shaped
 
     def play(self)->None:
         """

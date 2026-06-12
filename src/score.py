@@ -16,11 +16,11 @@ class Score:
 
         if lines_cleared == 1:
             self.score += 40 * self.level
-        if lines_cleared == 2:
+        elif lines_cleared == 2:
             self.score += 100 * self.level
-        if lines_cleared == 3:
+        elif lines_cleared == 3:
             self.score += 300 * self.level
-        if lines_cleared == 4:
+        elif lines_cleared == 4:
             self.score += 1200 * self.level
 
         if self.lines >= self.level * 10:
